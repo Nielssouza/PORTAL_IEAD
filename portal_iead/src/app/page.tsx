@@ -145,8 +145,8 @@ export default async function Home() {
           <div className="hero-copy">
             <h1>Nossa missão é te amar</h1>
             <p className="lead">
-              2026, ano de Efraim. Eu sou a videira, vos, as varas; quem esta em mim, e eu nele, este da muito fruto. Joao 15:5.
-              2026 sendo duplamente frutifero.
+              2026, ano de Efraim. Eu sou a videira, vós, as varas; quem está em mim, e eu nele, este dá muito fruto. João 15:5.
+              2026 sendo duplamente frutífero.
             </p>
             <div className="cta-row">
               <a className="cta blue" href="#programacao">
@@ -197,7 +197,7 @@ export default async function Home() {
       <section id="videos" className="section video-gallery">
         <div className="section-head gallery-head">
           <div>
-            <p className="kicker">Videos</p>
+            <p className="kicker">{"V\u00eddeos"}</p>
             <h2>Momentos vivos dos nossos cultos</h2>
           </div>
           <p className="section-text">
@@ -229,7 +229,7 @@ export default async function Home() {
         <div className="section-head gallery-head">
           <div>
             <p className="kicker">Galeria</p>
-            <h2>Momentos que contam nossa historia</h2>
+            <h2>Momentos que contam nossa história</h2>
           </div>
           <p className="section-text">
             Um mosaico vivo de adoração, comunhão e serviço que mostra nossa igreja em movimento.
@@ -255,7 +255,7 @@ export default async function Home() {
       <section id="visao" className="section vision">
         <div>
           <p className="kicker">Nossa visão</p>
-          <h2>Formar discipulos apaixonados por Jesus e pela cidade</h2>
+          <h2>Formar discípulos apaixonados por Jesus e pela cidade</h2>
         </div>
         <p className="section-text">
           Somos uma igreja evangélica com foco em restauração, cuidado e missão.
@@ -326,18 +326,18 @@ export default async function Home() {
             <p className="kicker">Nossa cultura</p>
             <h2>Adoração intensa, palavra viva e cuidado real</h2>
             <p>
-              Cada encontro e uma oportunidade de ouvir Deus e ser fortalecido.
-              Nos importamos com a sua historia e caminhada.
+              Cada encontro é uma oportunidade de ouvir Deus e ser fortalecido.
+              Nos importamos com a sua história e caminhada.
             </p>
           </div>
           <div className="highlight-info">
             <div>
               <h3>Grupos pequenos</h3>
-              <p>Comunhao e discipulado durante a semana.</p>
+              <p>Comunhão e discipulado durante a semana.</p>
             </div>
             <div>
               <h3>Atendimento pastoral</h3>
-              <p>Apoio espiritual e acompanhamento continuo.</p>
+              <p>Apoio espiritual e acompanhamento contínuo.</p>
             </div>
             <div>
               <h3>Impacto social</h3>
@@ -363,7 +363,7 @@ export default async function Home() {
             <h2>Sergio Araujo</h2>
             <p className="section-text">
               Pastor local da Assembleia de Deus Ministério Missão Jardim das Oliveiras. Servindo com
-              dedicação, ele tem como foco o ensino biblico, o cuidado pastoral e a formacao de uma
+              dedicação, ele tem como foco o ensino bíblico, o cuidado pastoral e a formação de uma
               igreja que ama pessoas e vive a missão de Cristo.
             </p>
           </div>
@@ -375,7 +375,7 @@ export default async function Home() {
           <h2>{"Planeje sua visita e venha como voc\u00ea est\u00e1"}</h2>
           <p>
             Estacionamento próximo, recepção acolhedora e um time pronto para
-            caminhar com voce.
+            caminhar com você.
           </p>
         </div>
         <form className="visit-form">
@@ -387,8 +387,8 @@ export default async function Home() {
 
       <section id="contato" className="section faq">
         <div>
-          <p className="kicker">Duvidas frequentes</p>
-          <h2>Informacoes rapidas para sua visita</h2>
+          <p className="kicker">Dúvidas frequentes</p>
+          <h2>Informações rápidas para sua visita</h2>
         </div>
         <div className="faq-grid">
           <details open>
@@ -401,7 +401,7 @@ export default async function Home() {
           </details>
           <details>
             <summary>Como participar dos grupos pequenos?</summary>
-            <p>Preencha o formulario e nossa equipe entra em contato.</p>
+            <p>Preencha o formulário e nossa equipe entra em contato.</p>
           </details>
         </div>
       </section>
