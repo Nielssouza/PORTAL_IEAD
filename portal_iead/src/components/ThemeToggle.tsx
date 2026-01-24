@@ -40,7 +40,7 @@ export default function ThemeToggle() {
 
   return (
     <div className="theme-toggle-wrap">
-      <span className="theme-label">Tema do sistema</span>
+      <span className="theme-label">Tema</span>
       <div className="theme-toggle" role="group" aria-label="Tema do sistema">
         {THEME_OPTIONS.map((option: ThemeOption) => (
           <button

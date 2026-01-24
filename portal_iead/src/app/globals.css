@@ -791,7 +791,7 @@ html[data-theme="dark"] .preloader-text {
 .theme-toggle-wrap {
   display: inline-flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
 }
 
@@ -801,6 +801,7 @@ html[data-theme="dark"] .preloader-text {
   letter-spacing: 0.12em;
   color: var(--muted);
   font-weight: 600;
+  text-align: center;
 }
 
 .theme-toggle {
