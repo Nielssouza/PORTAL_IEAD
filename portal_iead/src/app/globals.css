@@ -1724,6 +1724,190 @@ html[data-theme="blue"] .theme-pill.is-active {
   color: var(--muted);
 }
 
+.dashboard-reports {
+  display: grid;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.report-card {
+  background: var(--surface);
+  border-radius: 24px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 22px;
+  box-shadow: 0 18px 36px var(--shadow);
+  display: grid;
+  gap: 16px;
+}
+
+.report-card h3 {
+  margin: 0;
+}
+
+.report-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.chart-card {
+  min-height: 260px;
+}
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 150px;
+  padding-top: 10px;
+}
+
+.chart-bar {
+  flex: 1;
+  min-width: 22px;
+  border-radius: 12px 12px 8px 8px;
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.9), rgba(59, 130, 246, 0.3));
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.bar-label {
+  position: absolute;
+  bottom: -22px;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.bar-value {
+  position: absolute;
+  top: -20px;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.chart-line {
+  display: grid;
+  gap: 8px;
+}
+
+.chart-line svg {
+  width: 100%;
+  height: 140px;
+}
+
+.line-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--muted);
+  padding: 0 6px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.summary-item {
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  display: grid;
+  gap: 6px;
+}
+
+.summary-item strong {
+  font-size: 1.3rem;
+}
+
+.summary-item span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.table-scroll {
+  overflow: auto;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.report-card table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 420px;
+}
+
+.report-card th,
+.report-card td {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.report-card thead th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.status-pill {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.status-pill.ativo {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+
+.status-pill.pendente {
+  background: rgba(249, 115, 22, 0.12);
+  color: #c2410c;
+}
+
+.finance-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.finance-card {
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 6px;
+}
+
+.finance-card span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.finance-card strong {
+  font-size: 1.1rem;
+}
+
+.finance-card small {
+  color: var(--accent-2);
+  font-weight: 600;
+}
+
 .board {
   background: var(--surface);
   border-radius: 28px;
