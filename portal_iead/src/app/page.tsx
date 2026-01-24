@@ -1,7 +1,16 @@
 import Image from "next/image";
 import ThemeToggle from "@/components/ThemeToggle";
+import { getDb } from "@/lib/db";
 import path from "path";
 import { readdir } from "fs/promises";
+
+type NoticePost = {
+  id: number;
+  title: string;
+  body: string;
+  author: string;
+  createdAt: string;
+};
 
 const events = [
   {
@@ -72,6 +81,27 @@ const ministryIcons = [
   </svg>,
 ];
 
+function getNoticePosts() {
+  const db = getDb();
+  return db
+    .prepare(
+      `
+      SELECT posts.id, posts.title, posts.body, posts.created_at as createdAt, users.name as author
+      FROM posts
+      JOIN users ON users.id = posts.author_id
+      ORDER BY posts.created_at DESC
+      LIMIT 6
+    `
+    )
+    .all() as NoticePost[];
+}
+
+function getExcerpt(text: string, limit = 180) {
+  const clean = text.replace(/\s+/g, " ").trim();
+  if (clean.length <= limit) return clean;
+  return `${clean.slice(0, limit).trimEnd()}...`;
+}
+
 async function getGalleryImages() {
   const photosDir = path.join(process.cwd(), "public", "midias", "fotos");
   try {
@@ -103,6 +133,7 @@ export default async function Home() {
   const videoSources = await getVideoSources();
   const videoRowA = [...videoSources, ...videoSources];
   const videoRowB = [...videoSources].reverse().concat([...videoSources].reverse());
+  const noticePosts = getNoticePosts();
 
   return (
     <main className="page">
@@ -298,6 +329,45 @@ export default async function Home() {
               <button className="chip" type="button">Confirmar presença</button>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section id="avisos" className="section notices">
+        <div className="section-head">
+          <div>
+            <p className="kicker">Avisos</p>
+            <h2>Quadro de avisos</h2>
+            <p className="section-text">
+              {"Atualiza\u00e7\u00f5es e comunicados oficiais no estilo blog para toda a comunidade."}
+            </p>
+          </div>
+          <a className="cta small" href="/home">
+            Acessar Quadro de avisos
+          </a>
+        </div>
+        <div className="notice-grid">
+          {noticePosts.length === 0 ? (
+            <p className="section-text notice-empty">Nenhum aviso publicado ainda.</p>
+          ) : (
+            noticePosts.map((post) => (
+              <article key={post.id} className="notice-card">
+                <div>
+                  <h3>{post.title}</h3>
+                  <p className="notice-excerpt">{getExcerpt(post.body)}</p>
+                </div>
+                <div className="notice-meta">
+                  <span>{post.author}</span>
+                  <time>
+                    {new Date(post.createdAt).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </time>
+                </div>
+              </article>
+            ))
+          )}
         </div>
       </section>
 

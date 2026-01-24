@@ -401,6 +401,51 @@ a {
   color: var(--muted);
 }
 
+.notice-grid {
+  margin-top: 30px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.notice-card {
+  padding: 24px;
+  background: var(--surface);
+  border-radius: 22px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  box-shadow: 0 12px 24px var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 220px;
+}
+
+.notice-card h3 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+.notice-excerpt {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.notice-meta {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.notice-empty {
+  margin-top: 16px;
+}
+
 .chip {
   border: 1px solid rgba(31, 111, 235, 0.3);
   background: rgba(31, 111, 235, 0.08);
