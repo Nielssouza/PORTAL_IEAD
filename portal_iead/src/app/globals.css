@@ -2072,6 +2072,53 @@ html[data-theme="blue"] .theme-pill.is-active {
   font-size: 0.85rem;
 }
 
+.dashboard-verses {
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.index-verses {
+  margin-top: 28px;
+}
+
+.verse-card {
+  background: var(--surface);
+  border-radius: 22px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 24px;
+  box-shadow: 0 18px 36px var(--shadow);
+  display: grid;
+  gap: 12px;
+  animation: verseFade 0.6s ease;
+}
+
+.verse-reference {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  color: var(--accent-2);
+  font-weight: 700;
+}
+
+.verse-text {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  margin: 0;
+  color: var(--text);
+}
+
+@keyframes verseFade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .board {
   background: var(--surface);
   border-radius: 28px;

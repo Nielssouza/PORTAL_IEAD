@@ -1,6 +1,7 @@
 ﻿import LogoutButton from "@/components/LogoutButton";
 import { requireAuth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import BibleVerseTicker from "@/components/BibleVerseTicker";
 
 const modules = [
   {
@@ -47,11 +48,12 @@ export default async function HomePage() {
   const role = isAdmin ? "admin" : "member";
   const db = getDb();
   const viewRows = db
-    .prepare("SELECT path, count FROM page_views WHERE path IN (?, ?)")
-    .all("/", "/register") as Array<{ path: string; count: number }>;
+    .prepare("SELECT path, count FROM page_views WHERE path IN (?, ?, ?)")
+    .all("/", "/register", "/login") as Array<{ path: string; count: number }>;
   const viewMap = new Map(viewRows.map((row) => [row.path, row.count]));
   const indexViews = viewMap.get("/") ?? 0;
   const registerViews = viewMap.get("/register") ?? 0;
+  const loginViews = viewMap.get("/login") ?? 0;
   const userDetails = db
     .prepare(
       `
@@ -489,8 +491,19 @@ export default async function HomePage() {
             <strong className="metric-value">{registerViews}</strong>
             <span className="metric-note">{"Total acumulado"}</span>
           </article>
+          <article className="metric-card">
+            <div>
+              <p className="kicker">{"Login"}</p>
+              <h3>{"Acessos ao /login"}</h3>
+              <p className="report-meta">{"http://localhost:3000/login"}</p>
+            </div>
+            <strong className="metric-value">{loginViews}</strong>
+            <span className="metric-note">{"Total acumulado"}</span>
+          </article>
         </div>
       </section>
+      
+
     </main>
   );
 }

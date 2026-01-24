@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { FormEvent } from "react";
+import PageViewTracker from "@/components/PageViewTracker";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,6 +40,7 @@ export default function LoginPage() {
 
   return (
     <main className="auth-page">
+      <PageViewTracker path="/login" />
       {success ? (
         <div className="auth-preloader" role="status" aria-live="polite">
           <div className="preloader-card">

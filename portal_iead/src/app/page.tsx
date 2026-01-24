@@ -1,5 +1,6 @@
 import Image from "next/image";
 import ThemeToggle from "@/components/ThemeToggle";
+import BibleVerseTicker from "@/components/BibleVerseTicker";
 import PageViewTracker from "@/components/PageViewTracker";
 import path from "path";
 import { readdir } from "fs/promises";
@@ -196,6 +197,20 @@ export default async function Home() {
           </div>
         </section>
       </header>
+
+      <section className="section index-verses">
+        <div className="section-head">
+          <div>
+            <p className="kicker">{"Versículos"}</p>
+            <h2>{"Capítulos e versículos bíblicos"}</h2>
+          </div>
+          <p className="section-text">
+            {"Mensagem em destaque para fortalecer a fé durante o dia."}
+          </p>
+        </div>
+        <BibleVerseTicker />
+      </section>
+
       <section id="videos" className="section video-gallery">
         <div className="section-head gallery-head">
           <div>
