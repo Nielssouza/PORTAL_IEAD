@@ -1,8 +1,13 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getSessionUserByToken } from "@/lib/auth";
 
 export const runtime = "nodejs";
+
+const TEXT = {
+  unauthorized: "N\u00e3o autorizado",
+  missingFields: "Preencha t\u00edtulo e mensagem.",
+};
 
 export async function GET() {
   const db = getDb();
@@ -25,7 +30,7 @@ export async function POST(request: Request) {
   const token = request.cookies.get("auth_token")?.value;
   const user = getSessionUserByToken(token);
   if (!user) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    return NextResponse.json({ error: TEXT.unauthorized }, { status: 401 });
   }
 
   const body = await request.json().catch(() => ({}));
@@ -33,7 +38,7 @@ export async function POST(request: Request) {
   const content = String(body.body ?? "").trim();
 
   if (!title || !content) {
-    return NextResponse.json({ error: "Preencha título e mensagem." }, { status: 400 });
+    return NextResponse.json({ error: TEXT.missingFields }, { status: 400 });
   }
 
   const db = getDb();

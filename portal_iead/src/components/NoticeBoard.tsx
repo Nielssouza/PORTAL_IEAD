@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
@@ -9,6 +9,14 @@ type Post = {
   body: string;
   author: string;
   createdAt: string;
+};
+
+const TEXT = {
+  publishError: "N\u00e3o foi poss\u00edvel publicar.",
+  titlePlaceholder: "T\u00edtulo do aviso",
+  bodyPlaceholder: "Escreva a mensagem para os membros...",
+  header: "Quadro de avisos da igreja",
+  description: "Publica\u00e7\u00f5es oficiais para informar toda a comunidade.",
 };
 
 export default function NoticeBoard() {
@@ -42,7 +50,7 @@ export default function NoticeBoard() {
 
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
-      setError(payload.error ?? "Não foi possível publicar.");
+      setError(payload.error ?? TEXT.publishError);
       setLoading(false);
       return;
     }
@@ -59,22 +67,20 @@ export default function NoticeBoard() {
       <div className="board-header">
         <div>
           <p className="kicker">Avisos</p>
-          <h2>Quadro de avisos da igreja</h2>
-          <p className="section-text">
-            Publicações oficiais para informar toda a comunidade.
-          </p>
+          <h2>{TEXT.header}</h2>
+          <p className="section-text">{TEXT.description}</p>
         </div>
       </div>
       <form className="board-form" onSubmit={handleSubmit}>
         <input
           type="text"
-          placeholder="Título do aviso"
+          placeholder={TEXT.titlePlaceholder}
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           required
         />
         <textarea
-          placeholder="Escreva a mensagem para os membros..."
+          placeholder={TEXT.bodyPlaceholder}
           value={body}
           onChange={(event) => setBody(event.target.value)}
           rows={4}

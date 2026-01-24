@@ -1,4 +1,3 @@
-import NoticeBoard from "@/components/NoticeBoard";
 import LogoutButton from "@/components/LogoutButton";
 import UserAdmin from "@/components/UserAdmin";
 import { requireAuth } from "@/lib/auth";
@@ -76,8 +75,6 @@ export default async function HomePage() {
             </article>
           ))}
       </section>
-
-      <NoticeBoard />
 
       {isAdmin ? <UserAdmin /> : null}
     </main>
