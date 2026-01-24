@@ -372,7 +372,7 @@ export default async function Home() {
       <section id="visitar" className="section visit">
         <div>
           <p className="kicker">Primeira vez?</p>
-          <h2>Planeje sua visita e venha como voce esta</h2>
+          <h2>{"Planeje sua visita e venha como voc\u00ea est\u00e1"}</h2>
           <p>
             Estacionamento próximo, recepção acolhedora e um time pronto para
             caminhar com voce.
