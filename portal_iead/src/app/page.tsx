@@ -1,5 +1,7 @@
 ﻿import Image from "next/image";
 import ThemeToggle from "@/components/ThemeToggle";
+import path from "path";
+import { readdir } from "fs/promises";
 
 const events = [
   {
@@ -70,7 +72,38 @@ const ministryIcons = [
   </svg>,
 ];
 
-export default function Home() {
+async function getGalleryImages() {
+  const photosDir = path.join(process.cwd(), "public", "midias", "fotos");
+  try {
+    const files = await readdir(photosDir);
+    return files
+      .filter((file) => /\.(jpe?g|png|webp|gif)$/i.test(file))
+      .sort()
+      .map((file) => `/midias/fotos/${file}`);
+  } catch {
+    return [];
+  }
+}
+async function getVideoSources() {
+  const videosDir = path.join(process.cwd(), "public", "midias", "videos");
+  try {
+    const files = await readdir(videosDir);
+    return files
+      .filter((file) => /\.(mp4|webm|ogg)$/i.test(file))
+      .sort()
+      .map((file) => `/midias/videos/${file}`);
+  } catch {
+    return [];
+  }
+}
+export default async function Home() {
+  const galleryImages = await getGalleryImages();
+  const galleryRowA = [...galleryImages, ...galleryImages];
+  const galleryRowB = [...galleryImages].reverse().concat([...galleryImages].reverse());
+  const videoSources = await getVideoSources();
+  const videoRowA = [...videoSources, ...videoSources];
+  const videoRowB = [...videoSources].reverse().concat([...videoSources].reverse());
+
   return (
     <main className="page">
       <div className="grid-overlay" aria-hidden="true" />
@@ -93,9 +126,10 @@ export default function Home() {
               <span className="brand-sub">Ministério Missão Jardim das Oliveiras</span>
             </div>
           </div>
-          <div className="nav-links">
+                    <div className="nav-links">
             <a href="#visao">Visao</a>
             <a href="#programacao">Programacao</a>
+            <a href="#galeria">Galeria</a>
             <a href="#ministerios">Ministerios</a>
             <a href="#contato">Contato</a>
           </div>
@@ -158,46 +192,64 @@ export default function Home() {
           </div>
         </section>
       </header>
-      <section className="section video-section" aria-label="Evento ao vivo">
-        <div className="video-wrap">
-          <div className="video-track" aria-hidden="true">
-            <div className="video-slide">
-              <video autoPlay muted loop playsInline poster="/logo.jfif">
-                <source src="/videos/evento-placeholder.mp4" type="video/mp4" />
-              </video>
-            </div>
-            <div className="video-slide">
-              <video autoPlay muted loop playsInline poster="/logo.jfif">
-                <source src="/videos/evento-placeholder.mp4" type="video/mp4" />
-              </video>
-            </div>
-            <div className="video-slide">
-              <video autoPlay muted loop playsInline poster="/logo.jfif">
-                <source src="/videos/evento-placeholder.mp4" type="video/mp4" />
-              </video>
-            </div>
-            <div className="video-slide">
-              <video autoPlay muted loop playsInline poster="/logo.jfif">
-                <source src="/videos/evento-placeholder.mp4" type="video/mp4" />
-              </video>
-            </div>
-            <div className="video-slide">
-              <video autoPlay muted loop playsInline poster="/logo.jfif">
-                <source src="/videos/evento-placeholder.mp4" type="video/mp4" />
-              </video>
-            </div>
+      <section id="videos" className="section video-gallery">
+        <div className="section-head gallery-head">
+          <div>
+            <p className="kicker">Videos</p>
+            <h2>Momentos vivos dos nossos cultos</h2>
           </div>
-          <div className="video-overlay">
-            <p className="kicker">Ao vivo</p>
-            <h2>Um ambiente de adoracao acontecendo agora</h2>
-            <p>
-              Substitua este video pelo registro do seu culto ou evento especial.
-            </p>
-            <a className="cta blue" href="#programacao">Ver programacao</a>
+          <p className="section-text">
+            Reviva partes do culto e da comunhao em um carrossel continuo.
+          </p>
+        </div>
+        <div className="gallery-viewport video-viewport">
+          <div className="gallery-track track-a">
+            {videoRowA.map((src, idx) => (
+              <div className="video-card" key={`va-${idx}`}>
+                <video muted loop playsInline preload="metadata" autoPlay poster="/logo.jfif">
+                  <source src={encodeURI(src)} type="video/mp4" />
+                </video>
+              </div>
+            ))}
+          </div>
+          <div className="gallery-track track-b">
+            {videoRowB.map((src, idx) => (
+              <div className="video-card" key={`vb-${idx}`}>
+                <video muted loop playsInline preload="metadata" autoPlay poster="/logo.jfif">
+                  <source src={encodeURI(src)} type="video/mp4" />
+                </video>
+              </div>
+            ))}
           </div>
         </div>
       </section>
-
+<section id="galeria" className="section gallery">
+        <div className="section-head gallery-head">
+          <div>
+            <p className="kicker">Galeria</p>
+            <h2>Momentos que contam nossa historia</h2>
+          </div>
+          <p className="section-text">
+            Um mosaico vivo de adoracao, comunhao e servico que mostra nossa igreja em movimento.
+          </p>
+        </div>
+        <div className="gallery-viewport">
+          <div className="gallery-track track-a">
+            {galleryRowA.map((src, idx) => (
+              <div className="gallery-card" key={`a-${idx}`}>
+                <img src={src} alt="Momento da igreja" loading="lazy" />
+              </div>
+            ))}
+          </div>
+          <div className="gallery-track track-b">
+            {galleryRowB.map((src, idx) => (
+              <div className="gallery-card" key={`b-${idx}`}>
+                <img src={src} alt="Momento da igreja" loading="lazy" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
       <section id="visao" className="section vision">
         <div>
           <p className="kicker">Nossa visao</p>
@@ -335,8 +387,9 @@ export default function Home() {
           <strong>Assembleia de Deus Ministério Missão Jardim das Oliveiras</strong>
           <p>Fé, missão e família para nossa cidade.</p>
         </div>
-        <div className="footer-links">
+                <div className="footer-links">
           <a href="#programacao">Programacao</a>
+          <a href="#galeria">Galeria</a>
           <a href="#ministerios">Ministerios</a>
           <a href="#visitar">Visitar</a>
         </div>
@@ -344,6 +397,38 @@ export default function Home() {
     </main>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

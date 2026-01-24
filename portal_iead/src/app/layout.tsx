@@ -2,7 +2,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Portal IEAD",
+  title: "IEAD Jardim Das Oliveiras",
   description: "Frontend do Portal IEAD",
 };
 
