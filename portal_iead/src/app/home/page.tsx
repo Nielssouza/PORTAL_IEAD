@@ -34,9 +34,16 @@ const modules = [
   },
 ];
 
+const navLinks = [
+  { label: "Membros", href: "/membros", roles: ["admin"] },
+  { label: "Quadro de avisos", href: "/quadro-avisos", roles: ["admin", "member"] },
+  { label: "Cadastro de usuários", href: "/cadastro", roles: ["admin"] },
+] as const;
+
 export default async function HomePage() {
   const user = await requireAuth();
   const isAdmin = user.role === "admin";
+  const role = isAdmin ? "admin" : "member";
 
   return (
     <main className="dashboard">
@@ -56,9 +63,19 @@ export default async function HomePage() {
         </div>
       </header>
 
+      <section className="dashboard-nav">
+        {navLinks
+          .filter((link) => link.roles.includes(role))
+          .map((link) => (
+            <a key={link.href} className="cta ghost" href={link.href}>
+              {link.label}
+            </a>
+          ))}
+      </section>
+
       <section className="module-grid">
         {modules
-          .filter((module) => module.roles.includes(isAdmin ? "admin" : "member"))
+          .filter((module) => module.roles.includes(role))
           .map((module) => (
             <article key={module.title} className="module-card">
               <h3>{module.title}</h3>
