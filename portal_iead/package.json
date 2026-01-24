@@ -7,7 +7,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "lint:encoding": "node scripts/check-encoding.mjs",
+    "db:migrate": "node scripts/migrate-db.mjs",
+    "predev": "npm run lint:encoding",
+    "prebuild": "npm run lint:encoding",
+    "prestart": "npm run lint:encoding"
   },
   "dependencies": {
     "next": "^15.0.0",

@@ -42,7 +42,7 @@ export default function NoticeBoard() {
 
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
-      setError(payload.error ?? "N?o foi poss?vel publicar.");
+      setError(payload.error ?? "Não foi possível publicar.");
       setLoading(false);
       return;
     }
@@ -55,17 +55,20 @@ export default function NoticeBoard() {
   }
 
   return (
-    <section className="board">
+    <section id="avisos" className="board">
       <div className="board-header">
         <div>
-          <p className="kicker">Quadro de avisos</p>
-          <h2>Comunicados para toda a igreja</h2>
+          <p className="kicker">Avisos</p>
+          <h2>Quadro de avisos da igreja</h2>
+          <p className="section-text">
+            Publicações oficiais para informar toda a comunidade.
+          </p>
         </div>
       </div>
       <form className="board-form" onSubmit={handleSubmit}>
         <input
           type="text"
-          placeholder="T?tulo do aviso"
+          placeholder="Título do aviso"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           required

@@ -57,6 +57,7 @@ export default function LoginPage() {
 
       <section className="auth-card">
         <div className="auth-brand">
+          <a className="auth-logo" href="/">
           <div className="logo-shell">
             <Image
               src="/logo.jfif"
@@ -70,6 +71,7 @@ export default function LoginPage() {
             <p className="brand-title">Assembleia de Deus</p>
             <span className="brand-sub">Ministério Missão Jardim das Oliveiras</span>
           </div>
+        </a>
         </div>
         <div>
           <p className="kicker">Acesso restrito</p>
@@ -100,9 +102,14 @@ export default function LoginPage() {
             />
           </label>
           {error ? <span className="auth-error">{error}</span> : null}
-          <button className="cta primary" type="submit" disabled={loading}>
-            {loading ? "Entrando..." : "Entrar"}
-          </button>
+          <div className="form-actions">
+            <button className="cta primary" type="submit" disabled={loading}>
+              {loading ? "Entrando..." : "Entrar"}
+            </button>
+            <a className="cta ghost" href="/registro">
+              Cadastre-se
+            </a>
+          </div>
         </form>
       </section>
     </main>

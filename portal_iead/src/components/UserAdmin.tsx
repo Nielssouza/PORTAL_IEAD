@@ -8,6 +8,7 @@ type User = {
   name: string;
   email: string;
   role: "admin" | "member";
+  status: "active" | "pending" | "disabled";
   createdAt: string;
 };
 
@@ -16,7 +17,12 @@ export default function UserAdmin() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "member" });
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", role: "member", password: "" });
+  const [editForm, setEditForm] = useState({
+    name: "",
+    role: "member",
+    status: "active",
+    password: "",
+  });
 
   async function loadUsers() {
     const response = await fetch("/api/users");
@@ -40,7 +46,7 @@ export default function UserAdmin() {
 
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
-      setError(payload.error ?? "N?o foi poss?vel criar usu?rio.");
+      setError(payload.error ?? "Não foi possível criar usuário.");
       return;
     }
 
@@ -50,7 +56,7 @@ export default function UserAdmin() {
 
   function startEdit(user: User) {
     setEditingId(user.id);
-    setEditForm({ name: user.name, role: user.role, password: "" });
+    setEditForm({ name: user.name, role: user.role, status: user.status, password: "" });
   }
 
   async function handleUpdate(userId: number) {
@@ -62,7 +68,7 @@ export default function UserAdmin() {
 
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
-      setError(payload.error ?? "N?o foi poss?vel atualizar usu?rio.");
+      setError(payload.error ?? "Não foi possível atualizar usuário.");
       return;
     }
 
@@ -74,8 +80,8 @@ export default function UserAdmin() {
     <section className="user-admin">
       <div className="board-header">
         <div>
-          <p className="kicker">Administra??o</p>
-          <h2>Cadastro e edi??o de usu?rios</h2>
+          <p className="kicker">Administração</p>
+          <h2>Cadastro e edição de usuários</h2>
         </div>
       </div>
       <form className="user-form" onSubmit={handleCreate}>
@@ -106,7 +112,7 @@ export default function UserAdmin() {
           <option value="member">Membro</option>
           <option value="admin">Admin</option>
         </select>
-        <button className="cta primary" type="submit">Criar usu?rio</button>
+        <button className="cta primary" type="submit">Criar usuário</button>
       </form>
       {error ? <span className="auth-error">{error}</span> : null}
       <div className="user-list">
@@ -116,7 +122,16 @@ export default function UserAdmin() {
               <strong>{user.name}</strong>
               <span>{user.email}</span>
             </div>
-            <span className="user-role">{user.role === "admin" ? "Admin" : "Membro"}</span>
+            <div className="user-badges">
+              <span className="user-role">{user.role === "admin" ? "Admin" : "Membro"}</span>
+              <span className={`user-status status-${user.status}`}>
+                {user.status === "active"
+                  ? "Ativo"
+                  : user.status === "pending"
+                  ? "Pendente"
+                  : "Bloqueado"}
+              </span>
+            </div>
             {editingId === user.id ? (
               <div className="user-edit">
                 <input
@@ -131,6 +146,19 @@ export default function UserAdmin() {
                 >
                   <option value="member">Membro</option>
                   <option value="admin">Admin</option>
+                </select>
+                <select
+                  value={editForm.status}
+                  onChange={(event) =>
+                    setEditForm({
+                      ...editForm,
+                      status: event.target.value as "active" | "pending" | "disabled",
+                    })
+                  }
+                >
+                  <option value="active">Ativo</option>
+                  <option value="pending">Pendente</option>
+                  <option value="disabled">Bloqueado</option>
                 </select>
                 <input
                   type="password"

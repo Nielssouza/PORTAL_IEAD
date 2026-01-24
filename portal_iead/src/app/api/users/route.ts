@@ -16,12 +16,14 @@ function requireAdmin(token?: string | null) {
 export async function GET(request: Request) {
   const admin = requireAdmin(request.cookies.get("auth_token")?.value);
   if (!admin) {
-    return NextResponse.json({ error: "N?o autorizado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   const db = getDb();
   const users = db
-    .prepare("SELECT id, name, email, role, created_at as createdAt FROM users ORDER BY created_at DESC")
+    .prepare(
+      "SELECT id, name, email, role, status, created_at as createdAt FROM users ORDER BY created_at DESC"
+    )
     .all();
 
   return NextResponse.json({ users });
@@ -30,7 +32,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const admin = requireAdmin(request.cookies.get("auth_token")?.value);
   if (!admin) {
-    return NextResponse.json({ error: "N?o autorizado" }, { status: 401 });
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
   const body = await request.json().catch(() => ({}));
@@ -50,14 +52,14 @@ export async function POST(request: Request) {
   try {
     const result = db
       .prepare(
-        "INSERT INTO users (name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?)"
+        "INSERT INTO users (name, email, password_hash, role, status, created_at) VALUES (?, ?, ?, ?, 'active', ?)"
       )
       .run(name, email, hash, role, now);
 
     return NextResponse.json({
-      user: { id: result.lastInsertRowid, name, email, role, createdAt: now },
+      user: { id: result.lastInsertRowid, name, email, role, status: "active", createdAt: now },
     });
   } catch (error) {
-    return NextResponse.json({ error: "E-mail j? cadastrado." }, { status: 400 });
+    return NextResponse.json({ error: "E-mail já cadastrado." }, { status: 400 });
   }
 }

@@ -12,16 +12,28 @@ export async function POST(request: Request) {
   const password = String(body.password ?? "");
 
   if (!identifierRaw || !password) {
-    return NextResponse.json({ error: "Credenciais inv?lidas." }, { status: 400 });
+    return NextResponse.json({ error: "Credenciais inválidas." }, { status: 400 });
   }
 
   const db = getDb();
   const user = db
-    .prepare("SELECT id, name, email, password_hash, role FROM users WHERE email = ? OR LOWER(name) = ? LIMIT 1")
+    .prepare(
+      "SELECT id, name, email, password_hash, role, status FROM users WHERE email = ? OR LOWER(name) = ? LIMIT 1"
+    )
     .get(identifierLower, identifierLower);
 
   if (!user || !verifyPassword(password, user.password_hash)) {
-    return NextResponse.json({ error: "Usu?rio ou senha incorretos." }, { status: 401 });
+    return NextResponse.json({ error: "Usuário ou senha incorretos." }, { status: 401 });
+  }
+
+  if (user.status !== "active") {
+    return NextResponse.json(
+      {
+        error:
+          "Cadastro em análise. Aguarde a efetivação do cadastro para acessar o portal.",
+      },
+      { status: 403 }
+    );
   }
 
   const session = createSession(user.id);

@@ -6,37 +6,43 @@ import { requireAuth } from "@/lib/auth";
 const modules = [
   {
     title: "Secretaria",
-    description: "Gest?o de documentos, cartas e atendimentos internos.",
+    description: "Gestão de documentos, cartas e atendimentos internos.",
+    roles: ["admin"],
   },
   {
     title: "Membros",
-    description: "Acompanhamento de cadastro, presen?a e hist?rico pastoral.",
+    description: "Acompanhamento de cadastro, presença e histórico pastoral.",
+    roles: ["admin"],
   },
   {
     title: "Tesouraria",
-    description: "Controle financeiro, entradas e relat?rios da igreja.",
+    description: "Controle financeiro, entradas e relatórios da igreja.",
+    roles: ["admin"],
   },
   {
     title: "Cursos",
-    description: "Matr?culas, turmas e trilhas de ensino b?blico.",
-  },
-  {
-    title: "Sorteios",
-    description: "Campanhas, inscri??es e resultados para eventos.",
+    description: "Acesso aos cursos em que você está matriculado.",
+    roles: ["admin", "member"],
   },
   {
     title: "Meus certificados",
-    description: "Hist?rico de certificados e conquistas ministeriais.",
+    description: "Histórico de certificados e conquistas ministeriais.",
+    roles: ["admin", "member"],
   },
   {
-    title: "Cadastro e edi??o de usu?rios",
-    description: "Gerencie permiss?es e acessos da equipe.",
-    adminOnly: true,
+    title: "Quadro de avisos",
+    description: "Publicações oficiais para toda a igreja.",
+    roles: ["admin", "member"],
+  },
+  {
+    title: "Cadastro e edição de usuários",
+    description: "Gerencie permissões e acessos da equipe.",
+    roles: ["admin"],
   },
 ];
 
-export default function HomePage() {
-  const user = requireAuth();
+export default async function HomePage() {
+  const user = await requireAuth();
   const isAdmin = user.role === "admin";
 
   return (
@@ -46,8 +52,10 @@ export default function HomePage() {
           <p className="kicker">Painel interno</p>
           <h1>Bem-vindo, {user.name}</h1>
           <p className="section-text">
-            Perfil atual: {isAdmin ? "Admin" : "Membro"}. Use os m?dulos abaixo para
-            administrar as ?reas da igreja.
+            Perfil atual: {isAdmin ? "Admin" : "Membro"}.{" "}
+            {isAdmin
+              ? "Use os módulos abaixo para administrar as áreas da igreja."
+              : "Você tem acesso a cursos, certificados e ao quadro de avisos."}
           </p>
         </div>
         <div className="dashboard-actions">
@@ -57,7 +65,7 @@ export default function HomePage() {
 
       <section className="module-grid">
         {modules
-          .filter((module) => (module.adminOnly ? isAdmin : true))
+          .filter((module) => module.roles.includes(isAdmin ? "admin" : "member"))
           .map((module) => (
             <article key={module.title} className="module-card">
               <h3>{module.title}</h3>

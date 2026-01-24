@@ -8,6 +8,7 @@ export type AuthUser = {
   name: string;
   email: string;
   role: "admin" | "member";
+  status: "active" | "pending" | "disabled";
 };
 
 const SESSION_TTL_DAYS = 7;
@@ -38,7 +39,7 @@ export function getSessionUserByToken(token?: string | null): AuthUser | null {
   const row = db
     .prepare(
       `
-      SELECT users.id as id, users.name as name, users.email as email, users.role as role, sessions.expires_at as expires_at
+      SELECT users.id as id, users.name as name, users.email as email, users.role as role, users.status as status, sessions.expires_at as expires_at
       FROM sessions
       JOIN users ON users.id = sessions.user_id
       WHERE sessions.token = ?
@@ -55,29 +56,36 @@ export function getSessionUserByToken(token?: string | null): AuthUser | null {
     return null;
   }
 
+  if (row.status !== "active") {
+    clearSession(token);
+    return null;
+  }
+
   return {
     id: row.id as number,
     name: row.name as string,
     email: row.email as string,
     role: row.role as "admin" | "member",
+    status: row.status as "active" | "pending" | "disabled",
   };
 }
 
-export function getSessionUser(): AuthUser | null {
-  const token = cookies().get("auth_token")?.value;
+export async function getSessionUser(): Promise<AuthUser | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
   return getSessionUserByToken(token);
 }
 
-export function requireAuth() {
-  const user = getSessionUser();
+export async function requireAuth() {
+  const user = await getSessionUser();
   if (!user) {
     redirect("/login");
   }
   return user;
 }
 
-export function requireAdmin() {
-  const user = requireAuth();
+export async function requireAdmin() {
+  const user = await requireAuth();
   if (user.role !== "admin") {
     redirect("/home");
   }
