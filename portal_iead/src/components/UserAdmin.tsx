@@ -1,16 +1,7 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
-
-type User = {
-  id: number;
-  name: string;
-  email: string;
-  role: "admin" | "member";
-  status: "active" | "pending" | "disabled";
-  createdAt: string;
-};
 
 const TEXT = {
   sectionKicker: "Administra\u00e7\u00e3o",
@@ -20,40 +11,13 @@ const TEXT = {
   password: "Senha",
   createUser: "Criar usu\u00e1rio",
   createError: "N\u00e3o foi poss\u00edvel criar usu\u00e1rio.",
-  updateError: "N\u00e3o foi poss\u00edvel atualizar usu\u00e1rio.",
   member: "Membro",
   admin: "Admin",
-  active: "Ativo",
-  pending: "Pendente",
-  disabled: "Bloqueado",
-  edit: "Editar",
-  cancel: "Cancelar",
-  save: "Salvar",
-  newPassword: "Nova senha (opcional)",
 };
 
 export default function UserAdmin() {
-  const [users, setUsers] = useState<User[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "member" });
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({
-    name: "",
-    role: "member",
-    status: "active",
-    password: "",
-  });
-
-  async function loadUsers() {
-    const response = await fetch("/api/users");
-    if (!response.ok) return;
-    const payload = await response.json();
-    setUsers(payload.users ?? []);
-  }
-
-  useEffect(() => {
-    loadUsers();
-  }, []);
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -71,29 +35,9 @@ export default function UserAdmin() {
     }
 
     setForm({ name: "", email: "", password: "", role: "member" });
-    loadUsers();
-  }
-
-  function startEdit(user: User) {
-    setEditingId(user.id);
-    setEditForm({ name: user.name, role: user.role, status: user.status, password: "" });
-  }
-
-  async function handleUpdate(userId: number) {
-    const response = await fetch(`/api/users/${userId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editForm),
-    });
-
-    if (!response.ok) {
-      const payload = await response.json().catch(() => ({}));
-      setError(payload.error ?? TEXT.updateError);
-      return;
+    if (typeof window !== "undefined") {
+      window.location.reload();
     }
-
-    setEditingId(null);
-    loadUsers();
   }
 
   return (
@@ -134,74 +78,6 @@ export default function UserAdmin() {
         </button>
       </form>
       {error ? <span className="auth-error">{error}</span> : null}
-      <div className="user-list">
-        {users.map((user) => (
-          <div key={user.id} className="user-card">
-            <div>
-              <strong>{user.name}</strong>
-              <span>{user.email}</span>
-            </div>
-            <div className="user-badges">
-              <span className="user-role">{user.role === "admin" ? TEXT.admin : TEXT.member}</span>
-              <span className={`user-status status-${user.status}`}>
-                {user.status === "active"
-                  ? TEXT.active
-                  : user.status === "pending"
-                  ? TEXT.pending
-                  : TEXT.disabled}
-              </span>
-            </div>
-            {editingId === user.id ? (
-              <div className="user-edit">
-                <input
-                  value={editForm.name}
-                  onChange={(event) => setEditForm({ ...editForm, name: event.target.value })}
-                />
-                <select
-                  value={editForm.role}
-                  onChange={(event) =>
-                    setEditForm({ ...editForm, role: event.target.value as "admin" | "member" })
-                  }
-                >
-                  <option value="member">{TEXT.member}</option>
-                  <option value="admin">{TEXT.admin}</option>
-                </select>
-                <select
-                  value={editForm.status}
-                  onChange={(event) =>
-                    setEditForm({
-                      ...editForm,
-                      status: event.target.value as "active" | "pending" | "disabled",
-                    })
-                  }
-                >
-                  <option value="active">{TEXT.active}</option>
-                  <option value="pending">{TEXT.pending}</option>
-                  <option value="disabled">{TEXT.disabled}</option>
-                </select>
-                <input
-                  type="password"
-                  placeholder={TEXT.newPassword}
-                  value={editForm.password}
-                  onChange={(event) => setEditForm({ ...editForm, password: event.target.value })}
-                />
-                <div className="user-actions">
-                  <button className="cta ghost" type="button" onClick={() => setEditingId(null)}>
-                    {TEXT.cancel}
-                  </button>
-                  <button className="cta primary" type="button" onClick={() => handleUpdate(user.id)}>
-                    {TEXT.save}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button className="cta small" type="button" onClick={() => startEdit(user)}>
-                {TEXT.edit}
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
     </section>
   );
 }

@@ -37,6 +37,7 @@ const modules = [
 const navLinks = [
   { label: "Membros", href: "/membros", roles: ["admin"] },
   { label: "Quadro de avisos", href: "/quadro-avisos", roles: ["admin", "member"] },
+  { label: "Cadastro manual", href: "/cadastro-manual", roles: ["admin"] },
 ] as const;
 
 export default async function HomePage() {

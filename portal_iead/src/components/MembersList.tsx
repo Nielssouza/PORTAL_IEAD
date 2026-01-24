@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 
 type Member = {
   id: number;
@@ -32,6 +33,13 @@ type Filters = {
   createdTo: string;
 };
 
+type EditForm = {
+  name: string;
+  role: "admin" | "member";
+  status: "active" | "pending" | "disabled";
+  password: string;
+};
+
 const TEXT = {
   filters: "Filtros",
   searchPlaceholder: "Buscar por nome, e-mail ou CPF",
@@ -59,17 +67,31 @@ const TEXT = {
   createdAt: "Cadastro",
   birthDate: "Nascimento",
   empty: "Nenhum cadastro encontrado com os filtros selecionados.",
-};
-
-const STATUS_LABELS: Record<Member["status"], string> = {
+  actions: "A\u00e7\u00f5es",
+  edit: "Editar",
+  cancel: "Cancelar",
+  save: "Salvar",
+  updateError: "N\u00e3o foi poss\u00edvel atualizar o usu\u00e1rio.",
+  editName: "Nome",
+  editRole: "Perfil",
+  editStatus: "Status",
+  editPassword: "Nova senha (opcional)",
+  admin: "Admin",
+  member: "Membro",
   active: "Ativo",
   pending: "Pendente",
   disabled: "Bloqueado",
 };
 
+const STATUS_LABELS: Record<Member["status"], string> = {
+  active: TEXT.active,
+  pending: TEXT.pending,
+  disabled: TEXT.disabled,
+};
+
 const ROLE_LABELS: Record<Member["role"], string> = {
-  admin: "Admin",
-  member: "Membro",
+  admin: TEXT.admin,
+  member: TEXT.member,
 };
 
 const MEMBER_TYPE_LABELS: Record<string, string> = {
@@ -97,6 +119,8 @@ const MARITAL_LABELS: Record<string, string> = {
   uniao_estavel: "Uni\u00e3o est\u00e1vel",
 };
 
+const COLUMN_COUNT = 14;
+
 function formatDate(value?: string | null) {
   if (!value) return "-";
   const date = new Date(value);
@@ -115,10 +139,6 @@ function formatDateTime(value?: string | null) {
   });
 }
 
-function toLowerSafe(value?: string | null) {
-  return (value ?? "").toLowerCase();
-}
-
 function parseDateFilter(value: string) {
   if (!value) return null;
   const date = new Date(`${value}T00:00:00`);
@@ -127,6 +147,7 @@ function parseDateFilter(value: string) {
 }
 
 export default function MembersList({ users }: { users: Member[] }) {
+  const [items, setItems] = useState<Member[]>(users);
   const [filters, setFilters] = useState<Filters>({
     search: "",
     status: "",
@@ -138,13 +159,26 @@ export default function MembersList({ users }: { users: Member[] }) {
     createdFrom: "",
     createdTo: "",
   });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<EditForm>({
+    name: "",
+    role: "member",
+    status: "active",
+    password: "",
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [savingId, setSavingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    setItems(users);
+  }, [users]);
 
   const filtered = useMemo(() => {
     const query = filters.search.trim().toLowerCase();
     const from = parseDateFilter(filters.createdFrom);
     const to = parseDateFilter(filters.createdTo);
 
-    return users.filter((user) => {
+    return items.filter((user) => {
       if (filters.status && user.status !== filters.status) return false;
       if (filters.role && user.role !== filters.role) return false;
       if (filters.memberType && user.memberType !== filters.memberType) return false;
@@ -178,7 +212,7 @@ export default function MembersList({ users }: { users: Member[] }) {
         .toLowerCase();
       return haystack.includes(query);
     });
-  }, [filters, users]);
+  }, [filters, items]);
 
   function updateField<K extends keyof Filters>(key: K, value: Filters[K]) {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -196,6 +230,115 @@ export default function MembersList({ users }: { users: Member[] }) {
       createdFrom: "",
       createdTo: "",
     });
+  }
+
+  function startEdit(user: Member) {
+    setError(null);
+    setEditingId(user.id);
+    setEditForm({ name: user.name, role: user.role, status: user.status, password: "" });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditForm({ name: "", role: "member", status: "active", password: "" });
+    setError(null);
+  }
+
+  async function handleUpdate(userId: number) {
+    setSavingId(userId);
+    setError(null);
+
+    const response = await fetch(`/api/users/${userId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editForm),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      setError(payload.error ?? TEXT.updateError);
+      setSavingId(null);
+      return;
+    }
+
+    setItems((prev) =>
+      prev.map((user) =>
+        user.id === userId
+          ? { ...user, name: editForm.name, role: editForm.role, status: editForm.status }
+          : user
+      )
+    );
+    setSavingId(null);
+    cancelEdit();
+  }
+
+  function renderEditRow(user: Member): ReactNode {
+    if (editingId !== user.id) return null;
+    return (
+      <tr className="members-edit-row">
+        <td colSpan={COLUMN_COUNT}>
+          <div className="members-edit">
+            <div className="members-edit-field">
+              <label>{TEXT.editName}</label>
+              <input
+                value={editForm.name}
+                onChange={(event) => setEditForm({ ...editForm, name: event.target.value })}
+              />
+            </div>
+            <div className="members-edit-field">
+              <label>{TEXT.editRole}</label>
+              <select
+                value={editForm.role}
+                onChange={(event) =>
+                  setEditForm({ ...editForm, role: event.target.value as "admin" | "member" })
+                }
+              >
+                <option value="member">{TEXT.member}</option>
+                <option value="admin">{TEXT.admin}</option>
+              </select>
+            </div>
+            <div className="members-edit-field">
+              <label>{TEXT.editStatus}</label>
+              <select
+                value={editForm.status}
+                onChange={(event) =>
+                  setEditForm({
+                    ...editForm,
+                    status: event.target.value as "active" | "pending" | "disabled",
+                  })
+                }
+              >
+                <option value="active">{TEXT.active}</option>
+                <option value="pending">{TEXT.pending}</option>
+                <option value="disabled">{TEXT.disabled}</option>
+              </select>
+            </div>
+            <div className="members-edit-field">
+              <label>{TEXT.editPassword}</label>
+              <input
+                type="password"
+                value={editForm.password}
+                onChange={(event) => setEditForm({ ...editForm, password: event.target.value })}
+              />
+            </div>
+            {error ? <span className="auth-error">{error}</span> : null}
+            <div className="members-edit-actions">
+              <button className="cta ghost" type="button" onClick={cancelEdit}>
+                {TEXT.cancel}
+              </button>
+              <button
+                className="cta primary"
+                type="button"
+                onClick={() => handleUpdate(user.id)}
+                disabled={savingId === user.id}
+              >
+                {savingId === user.id ? "Salvando..." : TEXT.save}
+              </button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    );
   }
 
   return (
@@ -218,17 +361,17 @@ export default function MembersList({ users }: { users: Member[] }) {
               onChange={(event) => updateField("status", event.target.value)}
             >
               <option value="">Todos</option>
-              <option value="active">Ativo</option>
-              <option value="pending">Pendente</option>
-              <option value="disabled">Bloqueado</option>
+              <option value="active">{TEXT.active}</option>
+              <option value="pending">{TEXT.pending}</option>
+              <option value="disabled">{TEXT.disabled}</option>
             </select>
           </div>
           <div className="filter-field">
             <label>{TEXT.role}</label>
             <select value={filters.role} onChange={(event) => updateField("role", event.target.value)}>
               <option value="">Todos</option>
-              <option value="admin">Admin</option>
-              <option value="member">Membro</option>
+              <option value="admin">{TEXT.admin}</option>
+              <option value="member">{TEXT.member}</option>
             </select>
           </div>
           <div className="filter-field">
@@ -332,29 +475,48 @@ export default function MembersList({ users }: { users: Member[] }) {
                 <th>{TEXT.maritalLabel}</th>
                 <th>{TEXT.birthDate}</th>
                 <th>{TEXT.createdAt}</th>
+                <th>{TEXT.actions}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((user) => (
-                <tr key={user.id}>
-                  <td>{user.name}</td>
-                  <td>{user.email}</td>
-                  <td>{user.cpf ?? "-"}</td>
-                  <td>
-                    <span className={`members-chip status-${user.status}`}>
-                      {STATUS_LABELS[user.status]}
-                    </span>
-                  </td>
-                  <td>{ROLE_LABELS[user.role]}</td>
-                  <td>{user.memberType ? MEMBER_TYPE_LABELS[user.memberType] ?? user.memberType : "-"}</td>
-                  <td>{user.baptized === 1 ? "Sim" : user.baptized === 0 ? "N\u00e3o" : "-"}</td>
-                  <td>{user.hasRole === 1 ? user.roleTitle ?? "-" : user.hasRole === 0 ? "N\u00e3o" : "-"}</td>
-                  <td>{user.profession ?? "-"}</td>
-                  <td>{user.educationLevel ? EDUCATION_LABELS[user.educationLevel] ?? user.educationLevel : "-"}</td>
-                  <td>{user.maritalStatus ? MARITAL_LABELS[user.maritalStatus] ?? user.maritalStatus : "-"}</td>
-                  <td>{formatDate(user.birthDate)}</td>
-                  <td>{formatDateTime(user.createdAt)}</td>
-                </tr>
+                <Fragment key={user.id}>
+                  <tr>
+                    <td>{user.name}</td>
+                    <td>{user.email}</td>
+                    <td>{user.cpf ?? "-"}</td>
+                    <td>
+                      <span className={`members-chip status-${user.status}`}>
+                        {STATUS_LABELS[user.status]}
+                      </span>
+                    </td>
+                    <td>{ROLE_LABELS[user.role]}</td>
+                    <td>
+                      {user.memberType ? MEMBER_TYPE_LABELS[user.memberType] ?? user.memberType : "-"}
+                    </td>
+                    <td>{user.baptized === 1 ? "Sim" : user.baptized === 0 ? "N\u00e3o" : "-"}</td>
+                    <td>
+                      {user.hasRole === 1 ? user.roleTitle ?? "-" : user.hasRole === 0 ? "N\u00e3o" : "-"}
+                    </td>
+                    <td>{user.profession ?? "-"}</td>
+                    <td>
+                      {user.educationLevel
+                        ? EDUCATION_LABELS[user.educationLevel] ?? user.educationLevel
+                        : "-"}
+                    </td>
+                    <td>
+                      {user.maritalStatus ? MARITAL_LABELS[user.maritalStatus] ?? user.maritalStatus : "-"}
+                    </td>
+                    <td>{formatDate(user.birthDate)}</td>
+                    <td>{formatDateTime(user.createdAt)}</td>
+                    <td>
+                      <button className="cta small" type="button" onClick={() => startEdit(user)}>
+                        {TEXT.edit}
+                      </button>
+                    </td>
+                  </tr>
+                  {renderEditRow(user)}
+                </Fragment>
               ))}
             </tbody>
           </table>
