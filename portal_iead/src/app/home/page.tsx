@@ -1,42 +1,36 @@
-import LogoutButton from "@/components/LogoutButton";
-import UserAdmin from "@/components/UserAdmin";
+﻿import LogoutButton from "@/components/LogoutButton";
 import { requireAuth } from "@/lib/auth";
 
 const modules = [
   {
     title: "Secretaria",
-    description: "Gestão de documentos, cartas e atendimentos internos.",
+    description: "Gest\u00e3o de documentos, cartas e atendimentos internos.",
     roles: ["admin"],
   },
   {
     title: "Membros",
-    description: "Acompanhamento de cadastro, presença e histórico pastoral.",
+    description: "Acompanhamento de cadastro, presen\u00e7a e hist\u00f3rico pastoral.",
     roles: ["admin"],
   },
   {
     title: "Tesouraria",
-    description: "Controle financeiro, entradas e relatórios da igreja.",
+    description: "Controle financeiro, entradas e relat\u00f3rios da igreja.",
     roles: ["admin"],
   },
   {
     title: "Cursos",
-    description: "Acesso aos cursos em que você está matriculado.",
+    description: "Acesso aos cursos em que voc\u00ea est\u00e1 matriculado.",
     roles: ["admin", "member"],
   },
   {
     title: "Meus certificados",
-    description: "Histórico de certificados e conquistas ministeriais.",
+    description: "Hist\u00f3rico de certificados e conquistas ministeriais.",
     roles: ["admin", "member"],
   },
   {
     title: "Quadro de avisos",
-    description: "Publicações oficiais para toda a igreja.",
+    description: "Publica\u00e7\u00f5es oficiais para toda a igreja.",
     roles: ["admin", "member"],
-  },
-  {
-    title: "Cadastro e edição de usuários",
-    description: "Gerencie permissões e acessos da equipe.",
-    roles: ["admin"],
   },
 ];
 
@@ -53,14 +47,11 @@ export default async function HomePage() {
           <p className="section-text">
             Perfil atual: {isAdmin ? "Admin" : "Membro"}.{" "}
             {isAdmin
-              ? "Use os módulos abaixo para administrar as áreas da igreja."
-              : "Você tem acesso a cursos, certificados e ao quadro de avisos."}
+              ? "Use os m\u00f3dulos abaixo para administrar as \u00e1reas da igreja."
+              : "Voc\u00ea tem acesso a cursos, certificados e ao quadro de avisos."}
           </p>
         </div>
         <div className="dashboard-actions">
-          <a className="cta ghost" href="/quadro-avisos">
-            Acessar Quadro de avisos
-          </a>
           <LogoutButton />
         </div>
       </header>
@@ -75,8 +66,6 @@ export default async function HomePage() {
             </article>
           ))}
       </section>
-
-      {isAdmin ? <UserAdmin /> : null}
     </main>
   );
 }
