@@ -59,6 +59,9 @@ export default async function HomePage() {
           </p>
         </div>
         <div className="dashboard-actions">
+          <a className="cta ghost" href="/quadro-avisos">
+            Acessar Quadro de avisos
+          </a>
           <LogoutButton />
         </div>
       </header>
