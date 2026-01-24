@@ -788,6 +788,21 @@ html[data-theme="dark"] .preloader-text {
   min-height: 40px;
 }
 
+.theme-toggle-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.theme-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
 .theme-toggle {
   display: inline-flex;
   align-items: center;

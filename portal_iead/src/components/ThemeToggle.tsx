@@ -39,18 +39,21 @@ export default function ThemeToggle() {
   }
 
   return (
-    <div className="theme-toggle" role="group" aria-label="Tema">
-      {THEME_OPTIONS.map((option: ThemeOption) => (
-        <button
-          key={option.id}
-          type="button"
-          className={`theme-pill${theme === option.id ? " is-active" : ""}`}
-          aria-pressed={theme === option.id}
-          onClick={() => setThemeAndPersist(option.id)}
-        >
-          {option.label}
-        </button>
-      ))}
+    <div className="theme-toggle-wrap">
+      <span className="theme-label">Tema do sistema</span>
+      <div className="theme-toggle" role="group" aria-label="Tema do sistema">
+        {THEME_OPTIONS.map((option: ThemeOption) => (
+          <button
+            key={option.id}
+            type="button"
+            className={`theme-pill${theme === option.id ? " is-active" : ""}`}
+            aria-pressed={theme === option.id}
+            onClick={() => setThemeAndPersist(option.id)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
