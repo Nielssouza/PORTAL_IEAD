@@ -360,7 +360,7 @@ export default async function Home() {
           </div>
           <div className="pastor-content">
             <p className="kicker">Biografia do pastor</p>
-            <h2>Sergio Araujo</h2>
+            <h2>{"Sergio Ara\u00fajo"}</h2>
             <p className="section-text">
               Pastor local da Assembleia de Deus Ministério Missão Jardim das Oliveiras. Servindo com
               dedicação, ele tem como foco o ensino bíblico, o cuidado pastoral e a formação de uma
