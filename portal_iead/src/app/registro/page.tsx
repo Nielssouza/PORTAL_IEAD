@@ -32,6 +32,7 @@ const TEXT = {
   suaProfissao: "Sua profiss\u00e3o",
   grauEscolaridade: "Grau de escolaridade",
   estadoCivil: "Estado civil",
+  nao: "N\u00e3o",
   ensinoMedioIncompleto: "Ensino m\u00e9dio incompleto",
   ensinoMedioCompleto: "Ensino m\u00e9dio completo",
   ensinoTecnico: "Ensino t\u00e9cnico",
@@ -358,7 +359,7 @@ export default function RegistroPage() {
                 >
                   <option value="">Selecione</option>
                   <option value="sim">Sim</option>
-                  <option value="nao">N\u00e3o</option>
+                  <option value="nao">{TEXT.nao}</option>
                 </select>
               </label>
             ) : null}
@@ -383,7 +384,7 @@ export default function RegistroPage() {
               >
                 <option value="">Selecione</option>
                 <option value="sim">Sim</option>
-                <option value="nao">N\u00e3o</option>
+                <option value="nao">{TEXT.nao}</option>
               </select>
             </label>
             {form.baptized === "sim" ? (
