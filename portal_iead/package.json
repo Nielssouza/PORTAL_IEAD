@@ -12,7 +12,9 @@
   "dependencies": {
     "next": "^15.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "better-sqlite3": "^11.7.0",
+    "bcryptjs": "^2.4.3"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

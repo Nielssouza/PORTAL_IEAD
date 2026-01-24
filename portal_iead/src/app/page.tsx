@@ -135,6 +135,7 @@ export default async function Home() {
           </div>
           <div className="nav-actions">
             <ThemeToggle />
+            <a className="nav-cta" href="/login">Área de login</a>
             <a className="nav-cta" href="#visitar">Planeje sua visita</a>
           </div>
         </nav>
