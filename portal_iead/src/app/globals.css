@@ -425,6 +425,11 @@ a {
   font-size: 1.1rem;
 }
 
+.notice-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+}
+
 .notice-excerpt {
   margin: 0;
   color: var(--muted);
@@ -440,6 +445,41 @@ a {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
+}
+
+.notice-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.notice-body {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+.notice-full {
+  min-height: auto;
+}
+
+.board-hero {
+  padding-bottom: 30px;
+}
+
+.board-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.board-page .notice-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.board-page .notice-card {
+  padding: 28px;
 }
 
 .notice-empty {

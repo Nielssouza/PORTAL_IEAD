@@ -341,7 +341,7 @@ export default async function Home() {
               {"Atualiza\u00e7\u00f5es e comunicados oficiais no estilo blog para toda a comunidade."}
             </p>
           </div>
-          <a className="cta small" href="/home">
+          <a className="cta small" href="/quadro-avisos">
             Acessar Quadro de avisos
           </a>
         </div>
