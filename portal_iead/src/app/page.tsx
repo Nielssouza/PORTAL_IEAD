@@ -1,5 +1,6 @@
 import Image from "next/image";
 import ThemeToggle from "@/components/ThemeToggle";
+import PageViewTracker from "@/components/PageViewTracker";
 import path from "path";
 import { readdir } from "fs/promises";
 
@@ -106,6 +107,7 @@ export default async function Home() {
 
   return (
     <main className="page">
+      <PageViewTracker path="/" />
       <div className="grid-overlay" aria-hidden="true" />
 
       <header className="hero">

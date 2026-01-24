@@ -74,6 +74,12 @@ function initDb(database: Database.Database) {
       created_at TEXT NOT NULL,
       FOREIGN KEY (author_id) REFERENCES users(id)
     );
+
+    CREATE TABLE IF NOT EXISTS page_views (
+      path TEXT PRIMARY KEY,
+      count INTEGER NOT NULL DEFAULT 0,
+      updated_at TEXT NOT NULL
+    );
   `);
 
   const userColumns = getTableColumns(database, "users");

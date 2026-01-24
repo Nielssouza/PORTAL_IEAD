@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import type { FormEvent } from "react";
+import PageViewTracker from "@/components/PageViewTracker";
 
 const TEXT = {
   invalidCpf: "CPF inv\u00e1lido. Verifique e tente novamente.",
@@ -271,6 +272,7 @@ export default function RegistroPage() {
 
   return (
     <main className="auth-page">
+      <PageViewTracker path="/register" />
       <section className="auth-card register-card">
         <div className="auth-brand">
           <a className="auth-logo" href="/">

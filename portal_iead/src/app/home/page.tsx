@@ -1,5 +1,6 @@
 ﻿import LogoutButton from "@/components/LogoutButton";
 import { requireAuth } from "@/lib/auth";
+import { getDb } from "@/lib/db";
 
 const modules = [
   {
@@ -44,6 +45,113 @@ export default async function HomePage() {
   const user = await requireAuth();
   const isAdmin = user.role === "admin";
   const role = isAdmin ? "admin" : "member";
+  const db = getDb();
+  const viewRows = db
+    .prepare("SELECT path, count FROM page_views WHERE path IN (?, ?)")
+    .all("/", "/register") as Array<{ path: string; count: number }>;
+  const viewMap = new Map(viewRows.map((row) => [row.path, row.count]));
+  const indexViews = viewMap.get("/") ?? 0;
+  const registerViews = viewMap.get("/register") ?? 0;
+  const userDetails = db
+    .prepare(
+      `
+        SELECT
+          cpf,
+          birth_date,
+          member_type,
+          has_role,
+          role_title,
+          baptized,
+          baptism_date,
+          profession,
+          education_level,
+          marital_status,
+          address
+        FROM users
+        WHERE id = ?
+        LIMIT 1
+      `
+    )
+    .get(user.id) as
+      | {
+          cpf: string | null;
+          birth_date: string | null;
+          member_type: string | null;
+          has_role: number | null;
+          role_title: string | null;
+          baptized: number | null;
+          baptism_date: string | null;
+          profession: string | null;
+          education_level: string | null;
+          marital_status: string | null;
+          address: string | null;
+        }
+      | undefined;
+
+  const humanize = (value?: string | null) => {
+    if (!value) return "-";
+    return value
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return "-";
+    const parts = value.split("-");
+    if (parts.length !== 3) return value;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  };
+
+  const baptizedLabel =
+    userDetails?.baptized === 1 ? "Sim" : userDetails?.baptized === 0 ? "Não" : "-";
+  const hasRoleLabel =
+    userDetails?.member_type === "membro"
+      ? userDetails?.has_role === 1
+        ? "Sim"
+        : userDetails?.has_role === 0
+        ? "Não"
+        : "-"
+      : "-";
+
+  const userInfo = [
+    { label: "Nome", value: user.name },
+    { label: "E-mail", value: user.email },
+    { label: "Perfil", value: isAdmin ? "Admin" : "Membro" },
+    {
+      label: "Status",
+      value:
+        user.status === "active" ? "Ativo" : user.status === "pending" ? "Pendente" : "Bloqueado",
+    },
+    { label: "CPF", value: userDetails?.cpf || "-" },
+    { label: "Nascimento", value: formatDate(userDetails?.birth_date) },
+    { label: "Vínculo", value: humanize(userDetails?.member_type) },
+    { label: "Possui cargo", value: hasRoleLabel },
+    { label: "Cargo", value: userDetails?.role_title || "-" },
+    { label: "Batizado", value: baptizedLabel },
+    { label: "Data do batismo", value: formatDate(userDetails?.baptism_date) },
+    { label: "Profissão", value: userDetails?.profession || "-" },
+    { label: "Escolaridade", value: humanize(userDetails?.education_level) },
+    { label: "Estado civil", value: humanize(userDetails?.marital_status) },
+    { label: "Endereço", value: userDetails?.address || "-" },
+  ];
+
+  const notifications = [
+    {
+      title: "Novo cadastro pendente",
+      detail: "Ana Paula Ribeiro aguardando validação.",
+      time: "Hoje 09:20",
+    },
+    {
+      title: "Relatório financeiro atualizado",
+      detail: "Balancete de janeiro disponível.",
+      time: "Ontem 18:05",
+    },
+    {
+      title: "Agenda de domingo confirmada",
+      detail: "Culto de celebração às 18:00.",
+      time: "Ontem 10:40",
+    },
+  ];
   const memberGrowth = [
     { label: "Ago", value: 120 },
     { label: "Set", value: 138 },
@@ -107,7 +215,7 @@ export default async function HomePage() {
   return (
     <main className="dashboard">
       <header className="dashboard-header">
-        <div>
+        <div className="dashboard-intro">
           <p className="kicker">Painel interno</p>
           <h1>Bem-vindo, {user.name}</h1>
           <p className="section-text">
@@ -117,8 +225,62 @@ export default async function HomePage() {
               : "Voc\u00ea tem acesso a cursos, certificados e ao quadro de avisos."}
           </p>
         </div>
-        <div className="dashboard-actions">
-          <LogoutButton />
+        <div className="dashboard-side">
+          <div className="dashboard-actions">
+            <details className="popover">
+              <summary className="icon-button" aria-label="Notifica\u00e7\u00f5es">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M15 18H9" />
+                  <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2z" />
+                </svg>
+              </summary>
+              <div className="popover-card notification-panel">
+                <div>
+                  <p className="kicker">{"Notifica\u00e7\u00f5es"}</p>
+                  <h3>{"Atualiza\u00e7\u00f5es recentes"}</h3>
+                  <p className="report-meta">{"Atividades importantes do dia"}</p>
+                </div>
+                <div className="notification-list">
+                  {notifications.map((item) => (
+                    <div key={item.title} className="notification-item">
+                      <div>
+                        <strong>{item.title}</strong>
+                        <span>{item.detail}</span>
+                      </div>
+                      <small>{item.time}</small>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </details>
+
+            <details className="popover">
+              <summary className="icon-button" aria-label="Usu\u00e1rio">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M20 21c-2.2-3.4-4.9-5-8-5s-5.8 1.6-8 5" />
+                  <circle cx="12" cy="9" r="4" />
+                </svg>
+              </summary>
+              <div className="popover-card user-panel">
+                <div>
+                  <p className="kicker">{"Usu\u00e1rio"}</p>
+                  <h3>{"Dados completos"}</h3>
+                  <p className="report-meta">{"Perfil e informa\u00e7\u00f5es cadastrais"}</p>
+                </div>
+                <div className="user-details">
+                  {userInfo.map((item) => (
+                    <div key={item.label} className="detail-item">
+                      <span>{item.label}</span>
+                      <strong>{item.value}</strong>
+                    </div>
+                  ))}
+                </div>
+                <div className="user-actions">
+                  <LogoutButton />
+                </div>
+              </div>
+            </details>
+          </div>
         </div>
       </header>
 
@@ -294,6 +456,38 @@ export default async function HomePage() {
                 </tbody>
               </table>
             </div>
+          </article>
+        </div>
+      </section>
+
+      <section className="dashboard-metrics">
+        <div className="section-head">
+          <div>
+            <p className="kicker">{"Acessos"}</p>
+            <h2>{"Monitoramento de p\u00e1ginas"}</h2>
+            <p className="section-text">
+              {"Contagem total de acessos \u00e0s p\u00e1ginas principais do portal."}
+            </p>
+          </div>
+        </div>
+        <div className="metrics-grid">
+          <article className="metric-card">
+            <div>
+              <p className="kicker">{"P\u00e1gina inicial"}</p>
+              <h3>{"Acessos \u00e0 index"}</h3>
+              <p className="report-meta">{"http://localhost:3000/"}</p>
+            </div>
+            <strong className="metric-value">{indexViews}</strong>
+            <span className="metric-note">{"Total acumulado"}</span>
+          </article>
+          <article className="metric-card">
+            <div>
+              <p className="kicker">{"Cadastro"}</p>
+              <h3>{"Acessos ao /register"}</h3>
+              <p className="report-meta">{"http://localhost:3000/register"}</p>
+            </div>
+            <strong className="metric-value">{registerViews}</strong>
+            <span className="metric-note">{"Total acumulado"}</span>
           </article>
         </div>
       </section>
