@@ -1,13 +1,13 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 import ThemeToggle from "@/components/ThemeToggle";
 import path from "path";
 import { readdir } from "fs/promises";
 
 const events = [
   {
-    title: "Domingo de Celebracao",
+    title: "Domingo de Celebração",
     time: "Dom 18:00",
-    desc: "Louvor, palavra e comunhao para toda a família.",
+    desc: "Louvor, palavra e comunhão para toda a família.",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M4 12h16M12 4v16" />
@@ -15,9 +15,9 @@ const events = [
     ),
   },
   {
-    title: "Conexao de Jovens",
+    title: "Conexão de Jovens",
     time: "Sex 20:00",
-    desc: "Uma noite vibrante de adoracao e relacionamento.",
+    desc: "Uma noite vibrante de adoração e relacionamento.",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M6 6h12v12H6z" />
@@ -26,9 +26,9 @@ const events = [
     ),
   },
   {
-    title: "Intercessao e Cura",
+    title: "Intercessão e Cura",
     time: "Qua 19:30",
-    desc: "Clamor pela cidade e tempo de ministracao.",
+    desc: "Clamor pela cidade e tempo de ministração.",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 4c4 3 6 6 6 9a6 6 0 0 1-12 0c0-3 2-6 6-9z" />
@@ -42,7 +42,7 @@ const ministries = [
   "Kids",
   "Jovens",
   "Casais",
-  "Acao Social",
+  "Ação Social",
   "Discipulado",
 ];
 
@@ -127,10 +127,10 @@ export default async function Home() {
             </div>
           </div>
                     <div className="nav-links">
-            <a href="#visao">Visao</a>
-            <a href="#programacao">Programacao</a>
+            <a href="#visao">Visão</a>
+            <a href="#programacao">Programação</a>
             <a href="#galeria">Galeria</a>
-            <a href="#ministerios">Ministerios</a>
+            <a href="#ministerios">Ministérios</a>
             <a href="#contato">Contato</a>
           </div>
           <div className="nav-actions">
@@ -143,12 +143,12 @@ export default async function Home() {
           <div className="hero-copy">
             <h1>Nossa missão é te amar</h1>
             <p className="lead">
-              Cultos intensos, cuidado pastoral e uma comunidade que caminha
-              junta. Descubra um ambiente vibrante para adorar, aprender e servir.
+              2026, ano de Efraim. Eu sou a videira, vos, as varas; quem esta em mim, e eu nele, este da muito fruto. Joao 15:5.
+              2026 sendo duplamente frutifero.
             </p>
             <div className="cta-row">
               <a className="cta blue" href="#programacao">
-                Ver programacao
+                Ver programação
               </a>
               <a className="cta ghost" href="#visitar">
                 Quero visitar
@@ -199,7 +199,7 @@ export default async function Home() {
             <h2>Momentos vivos dos nossos cultos</h2>
           </div>
           <p className="section-text">
-            Reviva partes do culto e da comunhao em um carrossel continuo.
+            Reviva partes do culto e da comunhão em um carrossel contínuo.
           </p>
         </div>
         <div className="gallery-viewport video-viewport">
@@ -230,7 +230,7 @@ export default async function Home() {
             <h2>Momentos que contam nossa historia</h2>
           </div>
           <p className="section-text">
-            Um mosaico vivo de adoracao, comunhao e servico que mostra nossa igreja em movimento.
+            Um mosaico vivo de adoração, comunhão e serviço que mostra nossa igreja em movimento.
           </p>
         </div>
         <div className="gallery-viewport">
@@ -252,12 +252,12 @@ export default async function Home() {
       </section>
       <section id="visao" className="section vision">
         <div>
-          <p className="kicker">Nossa visao</p>
+          <p className="kicker">Nossa visão</p>
           <h2>Formar discipulos apaixonados por Jesus e pela cidade</h2>
         </div>
         <p className="section-text">
           Somos uma igreja evangélica com foco em restauração, cuidado e missão.
-          Investimos em pessoas, geracoes e famílias para transformar vidas com o
+          Investimos em pessoas, gerações e famílias para transformar vidas com o
           poder do evangelho.
         </p>
         <div className="stats">
@@ -271,7 +271,7 @@ export default async function Home() {
           </div>
           <div>
             <span>800+</span>
-            <p>Familias alcancadas</p>
+            <p>Famílias alcançadas</p>
           </div>
         </div>
       </section>
@@ -279,11 +279,11 @@ export default async function Home() {
       <section id="programacao" className="section schedule">
         <div className="section-head">
           <div>
-            <p className="kicker">Programacao</p>
+            <p className="kicker">Programação</p>
             <h2>Encontros pensados para todas as idades</h2>
           </div>
           <a className="cta small" href="#contato">
-            Receber lembrente
+            Receber lembrete
           </a>
         </div>
         <div className="schedule-grid">
@@ -293,7 +293,7 @@ export default async function Home() {
               <h3>{event.title}</h3>
               <span>{event.time}</span>
               <p>{event.desc}</p>
-              <button className="chip" type="button">Confirmar presenca</button>
+              <button className="chip" type="button">Confirmar presença</button>
             </article>
           ))}
         </div>
@@ -301,8 +301,8 @@ export default async function Home() {
 
       <section id="ministerios" className="section ministries">
         <div>
-          <p className="kicker">Ministerios</p>
-          <h2>Espacos para servir, crescer e liderar</h2>
+          <p className="kicker">Ministérios</p>
+          <h2>Espaços para servir, crescer e liderar</h2>
         </div>
         <div className="ministry-grid">
           {ministries.map((item, index) => (
@@ -311,7 +311,7 @@ export default async function Home() {
               <strong>{item}</strong>
               <p>
                 Times treinados para desenvolver dons e gerar impacto em todas as
-                geracoes.
+                gerações.
               </p>
             </div>
           ))}
@@ -322,7 +322,7 @@ export default async function Home() {
         <div className="highlight-card">
           <div>
             <p className="kicker">Nossa cultura</p>
-            <h2>Adoracao intensa, palavra viva e cuidado real</h2>
+            <h2>Adoração intensa, palavra viva e cuidado real</h2>
             <p>
               Cada encontro e uma oportunidade de ouvir Deus e ser fortalecido.
               Nos importamos com a sua historia e caminhada.
@@ -345,12 +345,34 @@ export default async function Home() {
         </div>
       </section>
 
+      <section id="pastor" className="section pastor">
+        <div className="pastor-card">
+          <div className="pastor-photo">
+            <Image
+              src="/midias/fotos/_MG_6206.JPG"
+              alt="Pastor Sergio Araujo"
+              width={520}
+              height={640}
+              className="pastor-img"
+            />
+          </div>
+          <div className="pastor-content">
+            <p className="kicker">Biografia do pastor</p>
+            <h2>Sergio Araujo</h2>
+            <p className="section-text">
+              Pastor local da Assembleia de Deus Ministério Missão Jardim das Oliveiras. Servindo com
+              dedicação, ele tem como foco o ensino biblico, o cuidado pastoral e a formacao de uma
+              igreja que ama pessoas e vive a missão de Cristo.
+            </p>
+          </div>
+        </div>
+      </section>
       <section id="visitar" className="section visit">
         <div>
           <p className="kicker">Primeira vez?</p>
           <h2>Planeje sua visita e venha como voce esta</h2>
           <p>
-            Estacionamento proximo, recepcao acolhedora e um time pronto para
+            Estacionamento próximo, recepção acolhedora e um time pronto para
             caminhar com voce.
           </p>
         </div>
@@ -372,7 +394,7 @@ export default async function Home() {
             <p>Av. Senador Canedo, Qd. 28, Lt. 13 Jardim das Oliveiras - Senador Canedo</p>
           </details>
           <details>
-            <summary>Tem programacao para criancas?</summary>
+            <summary>Tem programação para crianças?</summary>
             <p>Sim, nosso ministério Kids acontece em todos os cultos.</p>
           </details>
           <details>
@@ -388,15 +410,17 @@ export default async function Home() {
           <p>Fé, missão e família para nossa cidade.</p>
         </div>
                 <div className="footer-links">
-          <a href="#programacao">Programacao</a>
+          <a href="#programacao">Programação</a>
           <a href="#galeria">Galeria</a>
-          <a href="#ministerios">Ministerios</a>
+          <a href="#ministerios">Ministérios</a>
           <a href="#visitar">Visitar</a>
         </div>
       </footer>
     </main>
   );
 }
+
+
 
 
 

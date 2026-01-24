@@ -3,33 +3,54 @@
 import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "portal-theme";
+const THEME_OPTIONS = [
+  { id: "light", label: "Claro" },
+  { id: "blue", label: "Azul" },
+  { id: "dark", label: "Escuro" },
+] as const;
+
+type Theme = (typeof THEME_OPTIONS)[number]["id"];
+
+type ThemeOption = (typeof THEME_OPTIONS)[number];
+
+function applyTheme(theme: Theme) {
+  if (theme === "light") {
+    document.documentElement.removeAttribute("data-theme");
+  } else {
+    document.documentElement.setAttribute("data-theme", theme);
+  }
+}
 
 export default function ThemeToggle() {
-  const [isBlue, setIsBlue] = useState(false);
+  const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (saved === "blue") {
-      document.documentElement.setAttribute("data-theme", "blue");
-      setIsBlue(true);
+    const saved = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
+    if (saved && THEME_OPTIONS.some((option) => option.id === saved)) {
+      setTheme(saved);
+      applyTheme(saved);
     }
   }, []);
 
-  function toggleTheme() {
-    const next = !isBlue;
-    setIsBlue(next);
-    if (next) {
-      document.documentElement.setAttribute("data-theme", "blue");
-      window.localStorage.setItem(STORAGE_KEY, "blue");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-      window.localStorage.setItem(STORAGE_KEY, "light");
-    }
+  function setThemeAndPersist(next: Theme) {
+    setTheme(next);
+    applyTheme(next);
+    window.localStorage.setItem(STORAGE_KEY, next);
   }
 
   return (
-    <button className="theme-toggle" type="button" onClick={toggleTheme}>
-      {isBlue ? "Voltar ao claro" : "Modo azul"}
-    </button>
+    <div className="theme-toggle" role="group" aria-label="Tema">
+      {THEME_OPTIONS.map((option: ThemeOption) => (
+        <button
+          key={option.id}
+          type="button"
+          className={`theme-pill${theme === option.id ? " is-active" : ""}`}
+          aria-pressed={theme === option.id}
+          onClick={() => setThemeAndPersist(option.id)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
   );
 }
