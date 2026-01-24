@@ -1,0 +1,2 @@
+portal_iead/public/midias/** filter=lfs diff=lfs merge=lfs -text
+portal_iead/public/** filter=lfs diff=lfs merge=lfs -text
