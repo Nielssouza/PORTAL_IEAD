@@ -1,4 +1,5 @@
 ﻿import MembersList from "@/components/MembersList";
+import UserAdmin from "@/components/UserAdmin";
 import { requireAdmin } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 
@@ -74,6 +75,7 @@ export default async function MembrosPage() {
           </div>
         </div>
         <MembersList users={members} />
+        <UserAdmin />
       </section>
     </main>
   );

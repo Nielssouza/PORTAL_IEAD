@@ -1,9 +1,15 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getSessionUserByToken } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 
 export const runtime = "nodejs";
+
+const TEXT = {
+  unauthorized: "N\u00e3o autorizado",
+  required: "Preencha nome, e-mail e senha.",
+  emailTaken: "E-mail j\u00e1 cadastrado.",
+};
 
 function requireAdmin(token?: string | null) {
   const user = getSessionUserByToken(token);
@@ -16,7 +22,7 @@ function requireAdmin(token?: string | null) {
 export async function GET(request: Request) {
   const admin = requireAdmin(request.cookies.get("auth_token")?.value);
   if (!admin) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    return NextResponse.json({ error: TEXT.unauthorized }, { status: 401 });
   }
 
   const db = getDb();
@@ -32,7 +38,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const admin = requireAdmin(request.cookies.get("auth_token")?.value);
   if (!admin) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    return NextResponse.json({ error: TEXT.unauthorized }, { status: 401 });
   }
 
   const body = await request.json().catch(() => ({}));
@@ -42,7 +48,7 @@ export async function POST(request: Request) {
   const role = body.role === "admin" ? "admin" : "member";
 
   if (!name || !email || !password) {
-    return NextResponse.json({ error: "Preencha nome, e-mail e senha." }, { status: 400 });
+    return NextResponse.json({ error: TEXT.required }, { status: 400 });
   }
 
   const db = getDb();
@@ -60,6 +66,6 @@ export async function POST(request: Request) {
       user: { id: result.lastInsertRowid, name, email, role, status: "active", createdAt: now },
     });
   } catch (error) {
-    return NextResponse.json({ error: "E-mail já cadastrado." }, { status: 400 });
+    return NextResponse.json({ error: TEXT.emailTaken }, { status: 400 });
   }
 }

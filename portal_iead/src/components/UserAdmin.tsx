@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
@@ -10,6 +10,26 @@ type User = {
   role: "admin" | "member";
   status: "active" | "pending" | "disabled";
   createdAt: string;
+};
+
+const TEXT = {
+  sectionKicker: "Administra\u00e7\u00e3o",
+  sectionTitle: "Cadastro e edi\u00e7\u00e3o de usu\u00e1rios",
+  name: "Nome",
+  email: "E-mail",
+  password: "Senha",
+  createUser: "Criar usu\u00e1rio",
+  createError: "N\u00e3o foi poss\u00edvel criar usu\u00e1rio.",
+  updateError: "N\u00e3o foi poss\u00edvel atualizar usu\u00e1rio.",
+  member: "Membro",
+  admin: "Admin",
+  active: "Ativo",
+  pending: "Pendente",
+  disabled: "Bloqueado",
+  edit: "Editar",
+  cancel: "Cancelar",
+  save: "Salvar",
+  newPassword: "Nova senha (opcional)",
 };
 
 export default function UserAdmin() {
@@ -46,7 +66,7 @@ export default function UserAdmin() {
 
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
-      setError(payload.error ?? "Não foi possível criar usuário.");
+      setError(payload.error ?? TEXT.createError);
       return;
     }
 
@@ -68,7 +88,7 @@ export default function UserAdmin() {
 
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}));
-      setError(payload.error ?? "Não foi possível atualizar usuário.");
+      setError(payload.error ?? TEXT.updateError);
       return;
     }
 
@@ -80,39 +100,38 @@ export default function UserAdmin() {
     <section className="user-admin">
       <div className="board-header">
         <div>
-          <p className="kicker">Administração</p>
-          <h2>Cadastro e edição de usuários</h2>
+          <p className="kicker">{TEXT.sectionKicker}</p>
+          <h2>{TEXT.sectionTitle}</h2>
         </div>
       </div>
       <form className="user-form" onSubmit={handleCreate}>
         <input
-          placeholder="Nome"
+          placeholder={TEXT.name}
           value={form.name}
           onChange={(event) => setForm({ ...form, name: event.target.value })}
           required
         />
         <input
           type="email"
-          placeholder="E-mail"
+          placeholder={TEXT.email}
           value={form.email}
           onChange={(event) => setForm({ ...form, email: event.target.value })}
           required
         />
         <input
           type="password"
-          placeholder="Senha"
+          placeholder={TEXT.password}
           value={form.password}
           onChange={(event) => setForm({ ...form, password: event.target.value })}
           required
         />
-        <select
-          value={form.role}
-          onChange={(event) => setForm({ ...form, role: event.target.value })}
-        >
-          <option value="member">Membro</option>
-          <option value="admin">Admin</option>
+        <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })}>
+          <option value="member">{TEXT.member}</option>
+          <option value="admin">{TEXT.admin}</option>
         </select>
-        <button className="cta primary" type="submit">Criar usuário</button>
+        <button className="cta primary" type="submit">
+          {TEXT.createUser}
+        </button>
       </form>
       {error ? <span className="auth-error">{error}</span> : null}
       <div className="user-list">
@@ -123,13 +142,13 @@ export default function UserAdmin() {
               <span>{user.email}</span>
             </div>
             <div className="user-badges">
-              <span className="user-role">{user.role === "admin" ? "Admin" : "Membro"}</span>
+              <span className="user-role">{user.role === "admin" ? TEXT.admin : TEXT.member}</span>
               <span className={`user-status status-${user.status}`}>
                 {user.status === "active"
-                  ? "Ativo"
+                  ? TEXT.active
                   : user.status === "pending"
-                  ? "Pendente"
-                  : "Bloqueado"}
+                  ? TEXT.pending
+                  : TEXT.disabled}
               </span>
             </div>
             {editingId === user.id ? (
@@ -144,8 +163,8 @@ export default function UserAdmin() {
                     setEditForm({ ...editForm, role: event.target.value as "admin" | "member" })
                   }
                 >
-                  <option value="member">Membro</option>
-                  <option value="admin">Admin</option>
+                  <option value="member">{TEXT.member}</option>
+                  <option value="admin">{TEXT.admin}</option>
                 </select>
                 <select
                   value={editForm.status}
@@ -156,28 +175,28 @@ export default function UserAdmin() {
                     })
                   }
                 >
-                  <option value="active">Ativo</option>
-                  <option value="pending">Pendente</option>
-                  <option value="disabled">Bloqueado</option>
+                  <option value="active">{TEXT.active}</option>
+                  <option value="pending">{TEXT.pending}</option>
+                  <option value="disabled">{TEXT.disabled}</option>
                 </select>
                 <input
                   type="password"
-                  placeholder="Nova senha (opcional)"
+                  placeholder={TEXT.newPassword}
                   value={editForm.password}
                   onChange={(event) => setEditForm({ ...editForm, password: event.target.value })}
                 />
                 <div className="user-actions">
                   <button className="cta ghost" type="button" onClick={() => setEditingId(null)}>
-                    Cancelar
+                    {TEXT.cancel}
                   </button>
                   <button className="cta primary" type="button" onClick={() => handleUpdate(user.id)}>
-                    Salvar
+                    {TEXT.save}
                   </button>
                 </div>
               </div>
             ) : (
               <button className="cta small" type="button" onClick={() => startEdit(user)}>
-                Editar
+                {TEXT.edit}
               </button>
             )}
           </div>
