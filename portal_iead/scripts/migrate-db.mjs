@@ -26,8 +26,9 @@ function loadEnv() {
 
 loadEnv();
 
+const isHeroku = Boolean(process.env.DYNO || process.env.HEROKU_APP_NAME);
 const connectionString =
-  process.env.HEROKU_APP_NAME && process.env.DATABASE_URL
+  isHeroku && process.env.DATABASE_URL
     ? process.env.DATABASE_URL
     : process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
 if (!connectionString) {
