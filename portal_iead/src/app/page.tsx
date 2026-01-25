@@ -4,7 +4,7 @@ import { getDb } from "@/lib/db";
 import BibleVerseTicker from "@/components/BibleVerseTicker";
 import PageViewTracker from "@/components/PageViewTracker";
 import path from "path";
-import { readdir } from "fs/promises";
+import { readdir, readFile } from "fs/promises";
 
 export const dynamic = "force-dynamic";
 
@@ -68,29 +68,76 @@ const ministryIcons = [
   </svg>,
 ];
 
-async function getGalleryImages() {
-  const photosDir = path.join(process.cwd(), "public", "midias", "fotos");
+const mediaBaseUrl = (process.env.NEXT_PUBLIC_MEDIA_BASE_URL || "/midias").replace(
+  /\/$/,
+  ""
+);
+
+function buildMediaUrl(folder: "fotos" | "videos", file: string) {
+  const encoded = encodeURIComponent(file);
+  return `${mediaBaseUrl}/${folder}/${encoded}`;
+}
+
+async function fetchRemoteManifest() {
+  if (!mediaBaseUrl.startsWith("http")) return null;
+  const manifestUrl = `${mediaBaseUrl}/manifest.json`;
   try {
-    const files = await readdir(photosDir);
-    return files
-      .filter((file) => /\.(jpe?g|png|webp|gif)$/i.test(file))
-      .sort()
-      .map((file) => `/midias/fotos/${file}`);
+    const res = await fetch(manifestUrl, { cache: "no-store" });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { photos?: string[]; videos?: string[] };
+    return {
+      photos: Array.isArray(data.photos) ? data.photos : [],
+      videos: Array.isArray(data.videos) ? data.videos : [],
+    };
   } catch {
-    return [];
+    return null;
   }
 }
-async function getVideoSources() {
-  const videosDir = path.join(process.cwd(), "public", "midias", "videos");
+
+async function loadMediaManifest() {
+  const remote = await fetchRemoteManifest();
+  if (remote) return remote;
   try {
-    const files = await readdir(videosDir);
-    return files
-      .filter((file) => /\.(mp4|webm|ogg)$/i.test(file))
-      .sort()
-      .map((file) => `/midias/videos/${file}`);
+    const manifestPath = path.join(process.cwd(), "public", "midias", "manifest.json");
+    const raw = await readFile(manifestPath, "utf-8");
+    const data = JSON.parse(raw) as { photos?: string[]; videos?: string[] };
+    return {
+      photos: Array.isArray(data.photos) ? data.photos : [],
+      videos: Array.isArray(data.videos) ? data.videos : [],
+    };
   } catch {
-    return [];
+    return { photos: [], videos: [] };
   }
+}
+
+async function getGalleryImages() {
+  const manifest = await loadMediaManifest();
+  let files = manifest.photos;
+  if (!files.length) {
+    const photosDir = path.join(process.cwd(), "public", "midias", "fotos");
+    try {
+      files = (await readdir(photosDir)).filter((file) =>
+        /\.(jpe?g|png|webp|gif)$/i.test(file)
+      );
+    } catch {
+      files = [];
+    }
+  }
+  return files.sort().map((file) => buildMediaUrl("fotos", file));
+}
+
+async function getVideoSources() {
+  const manifest = await loadMediaManifest();
+  let files = manifest.videos;
+  if (!files.length) {
+    const videosDir = path.join(process.cwd(), "public", "midias", "videos");
+    try {
+      files = (await readdir(videosDir)).filter((file) => /\.(mp4|webm|ogg)$/i.test(file));
+    } catch {
+      files = [];
+    }
+  }
+  return files.sort().map((file) => buildMediaUrl("videos", file));
 }
 export default async function Home() {
   const db = await getDb();
@@ -130,6 +177,7 @@ export default async function Home() {
   const videoSources = await getVideoSources();
   const videoRowA = [...videoSources, ...videoSources];
   const videoRowB = [...videoSources].reverse().concat([...videoSources].reverse());
+  const pastorPhotoSrc = buildMediaUrl("fotos", "_MG_6206.JPG");
 
   return (
     <main className="page">
@@ -393,7 +441,7 @@ export default async function Home() {
         <div className="pastor-card">
           <div className="pastor-photo">
             <Image
-              src="/midias/fotos/_MG_6206.JPG"
+              src={pastorPhotoSrc}
               alt="Pastor Sergio Araujo"
               width={520}
               height={640}
