@@ -3,6 +3,7 @@ import { getDb } from "@/lib/db";
 import UserFavorites from "@/components/UserFavorites";
 import EventForm from "@/components/EventForm";
 import HeaderPopovers from "@/components/HeaderPopovers";
+import QuickNavSearch from "@/components/QuickNavSearch";
 
 const modules = [
   {
@@ -63,6 +64,7 @@ export default async function HomePage() {
   const user = await requireAuth();
   const isAdmin = user.role === "admin";
   const role = isAdmin ? "admin" : "member";
+  const allowedLinks = navLinks.filter((link) => link.roles.includes(role));
   const db = getDb();
   const viewRows = db
     .prepare("SELECT path, count FROM page_views WHERE path IN (?, ?, ?)")
@@ -370,13 +372,12 @@ export default async function HomePage() {
       </header>
 
       <section className="dashboard-nav">
-        {navLinks
-          .filter((link) => link.roles.includes(role))
-          .map((link) => (
-            <a key={link.href} className="cta ghost" href={link.href}>
-              {link.label}
-            </a>
-          ))}
+        {allowedLinks.map((link) => (
+          <a key={link.href} className="cta ghost" href={link.href}>
+            {link.label}
+          </a>
+        ))}
+        <QuickNavSearch items={allowedLinks.map((link) => ({ label: link.label, href: link.href }))} />
       </section>
 
       <section className="home-overview">
