@@ -298,7 +298,7 @@ export default async function Home() {
           <div className="gallery-track track-a">
             {videoRowA.map((src, idx) => (
               <div className="video-card" key={`va-${idx}`}>
-                <video muted loop playsInline preload="metadata" autoPlay poster="/logo.jfif">
+                <video muted loop playsInline preload="metadata" autoPlay>
                   <source src={encodeURI(src)} type="video/mp4" />
                 </video>
               </div>
@@ -307,7 +307,7 @@ export default async function Home() {
           <div className="gallery-track track-b">
             {videoRowB.map((src, idx) => (
               <div className="video-card" key={`vb-${idx}`}>
-                <video muted loop playsInline preload="metadata" autoPlay poster="/logo.jfif">
+                <video muted loop playsInline preload="metadata" autoPlay>
                   <source src={encodeURI(src)} type="video/mp4" />
                 </video>
               </div>
