@@ -1,3 +1,5 @@
+import { requireAuth } from "@/lib/auth";
+
 async function getHealth() {
   const res = await fetch("/api/health", { cache: "no-store" });
   if (!res.ok) {
@@ -7,6 +9,7 @@ async function getHealth() {
 }
 
 export default async function StatusPage() {
+  await requireAuth();
   const data = await getHealth();
 
   return (

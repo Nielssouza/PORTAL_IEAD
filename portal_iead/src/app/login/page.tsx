@@ -108,7 +108,7 @@ export default function LoginPage() {
             <button className="cta primary" type="submit" disabled={loading}>
               {loading ? "Entrando..." : "Entrar"}
             </button>
-            <a className="cta ghost" href="/registro">
+            <a className="cta ghost" href="/register">
               Cadastre-se
             </a>
           </div>

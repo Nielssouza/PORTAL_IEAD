@@ -1,7 +1,8 @@
-﻿import LogoutButton from "@/components/LogoutButton";
 import { requireAuth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import BibleVerseTicker from "@/components/BibleVerseTicker";
+import UserFavorites from "@/components/UserFavorites";
+import EventForm from "@/components/EventForm";
+import HeaderPopovers from "@/components/HeaderPopovers";
 
 const modules = [
   {
@@ -17,6 +18,16 @@ const modules = [
   {
     title: "Tesouraria",
     description: "Controle financeiro, entradas e relat\u00f3rios da igreja.",
+    roles: ["admin"],
+  },
+  {
+    title: "Sorteios",
+    description: "Gerencie rifas, quotas e vendas de n\u00famero.",
+    roles: ["admin"],
+  },
+  {
+    title: "Escola B\u00edblica",
+    description: "Matr\u00edculas, chamada e conte\u00fado da Escola B\u00edblica.",
     roles: ["admin"],
   },
   {
@@ -38,6 +49,12 @@ const modules = [
 
 const navLinks = [
   { label: "Membros", href: "/membros", roles: ["admin"] },
+  { label: "Secretaria", href: "/secretaria", roles: ["admin"] },
+  { label: "Tesouraria", href: "/tesouraria", roles: ["admin"] },
+  { label: "Cursos", href: "/cursos", roles: ["admin", "member"] },
+  { label: "Meus certificados", href: "/meus-certificados", roles: ["admin", "member"] },
+  { label: "Escola B\u00edblica", href: "/escola-biblica", roles: ["admin"] },
+  { label: "Sorteios", href: "/sorteios", roles: ["admin"] },
   { label: "Quadro de avisos", href: "/quadro-avisos", roles: ["admin", "member"] },
   { label: "Cadastro manual", href: "/cadastro-manual", roles: ["admin"] },
 ] as const;
@@ -54,6 +71,126 @@ export default async function HomePage() {
   const indexViews = viewMap.get("/") ?? 0;
   const registerViews = viewMap.get("/register") ?? 0;
   const loginViews = viewMap.get("/login") ?? 0;
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayRegistrationsRow = db
+    .prepare("SELECT COUNT(*) as count FROM users WHERE date(created_at) = ?")
+    .get(todayKey) as { count: number };
+  const pendingRow = db
+    .prepare("SELECT COUNT(*) as count FROM users WHERE status = 'pending'")
+    .get() as { count: number };
+  const approvalsRow = db
+    .prepare("SELECT COUNT(*) as count FROM users WHERE status = 'active' AND date(created_at) = ?")
+    .get(todayKey) as { count: number };
+  const totalUsersRow = db
+    .prepare("SELECT COUNT(*) as count FROM users")
+    .get() as { count: number };
+
+  const todayRegistrations = todayRegistrationsRow?.count ?? 0;
+  const pendingCount = pendingRow?.count ?? 0;
+  const approvalsToday = approvalsRow?.count ?? 0;
+  const totalUsers = totalUsersRow?.count ?? 0;
+
+  const kpiCards = [
+    { label: "Cadastros hoje", value: String(todayRegistrations) },
+    { label: "Pendentes", value: String(pendingCount) },
+    { label: "Aprovações do dia", value: String(approvalsToday) },
+    { label: "Total de membros", value: String(totalUsers) },
+  ];
+
+  const alerts = [
+    pendingCount > 0
+      ? {
+          title: "Cadastros aguardando",
+          detail: `${pendingCount} cadastros pendentes para aprovação.`,
+          tone: "warn",
+        }
+      : {
+          title: "Sem pendências",
+          detail: "Nenhum cadastro pendente no momento.",
+          tone: "success",
+        },
+    {
+      title: "Saldo mensal",
+      detail: "Saldo atual abaixo da meta sugerida.",
+      tone: "info",
+    },
+  ];
+
+  const quickActions = [
+    { label: "Membros", href: "/membros" },
+    { label: "Quadro de avisos", href: "/quadro-avisos" },
+    { label: "Cadastro", href: "/cadastro-manual" },
+    { label: "Relatórios", href: "#relatorios" },
+  ];
+
+  const weekdayMap = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "S\u00e1b"];
+  const eventRows = db
+    .prepare(
+      "SELECT title, description, event_date as date, event_time as time FROM events WHERE date(event_date) >= date('now') ORDER BY event_date ASC, event_time ASC LIMIT 14"
+    )
+    .all() as Array<{ title: string; description: string | null; date: string; time: string }>;
+
+  const fallbackEvents = [
+    { title: "Culto de Celebra\u00e7\u00e3o", time: "Dom 18:00", date: "" },
+    { title: "Conex\u00e3o de Jovens", time: "Sex 20:00", date: "" },
+    { title: "Intercess\u00e3o e Cura", time: "Qua 19:30", date: "" },
+    { title: "Discipulado", time: "Ter 19:30", date: "" },
+  ];
+
+  const upcomingEvents = eventRows.map((event) => {
+    const dateObj = new Date(`${event.date}T00:00:00`);
+    const dayLabel = weekdayMap[dateObj.getDay()] ?? "";
+    return {
+      title: event.title,
+      description: event.description ?? "",
+      time: `${dayLabel} ${event.time}`.trim(),
+      date: event.date,
+      rawTime: event.time,
+    };
+  });
+
+  const weeklyEvents =
+    upcomingEvents.length > 0
+      ? upcomingEvents.slice(0, 4).map((event) => ({ title: event.title, time: event.time }))
+      : fallbackEvents;
+
+  const buildDateKey = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const weekCalendar = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() + index);
+    const dateKey = buildDateKey(date);
+    const label = weekdayMap[date.getDay()] ?? "";
+    const matched = upcomingEvents.find((event) => event.date === dateKey);
+    return {
+      day: label,
+      label: matched?.title ?? "Livre",
+      time: matched?.rawTime ?? "",
+    };
+  });
+
+  const timeline = [
+    {
+      title: "Login administrativo",
+      detail: "Administrador acessou o painel.",
+      time: "Hoje 08:40",
+    },
+    {
+      title: "Cadastro aprovado",
+      detail: "Sérgio Araújo atualizado para ativo.",
+      time: "Ontem 18:12",
+    },
+    {
+      title: "Novo aviso publicado",
+      detail: "Agenda de domingo atualizada.",
+      time: "Ontem 10:05",
+    },
+  ];
   const userDetails = db
     .prepare(
       `
@@ -228,61 +365,7 @@ export default async function HomePage() {
           </p>
         </div>
         <div className="dashboard-side">
-          <div className="dashboard-actions">
-            <details className="popover">
-              <summary className="icon-button" aria-label="Notifica\u00e7\u00f5es">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M15 18H9" />
-                  <path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16l-2-2z" />
-                </svg>
-              </summary>
-              <div className="popover-card notification-panel">
-                <div>
-                  <p className="kicker">{"Notifica\u00e7\u00f5es"}</p>
-                  <h3>{"Atualiza\u00e7\u00f5es recentes"}</h3>
-                  <p className="report-meta">{"Atividades importantes do dia"}</p>
-                </div>
-                <div className="notification-list">
-                  {notifications.map((item) => (
-                    <div key={item.title} className="notification-item">
-                      <div>
-                        <strong>{item.title}</strong>
-                        <span>{item.detail}</span>
-                      </div>
-                      <small>{item.time}</small>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </details>
-
-            <details className="popover">
-              <summary className="icon-button" aria-label="Usu\u00e1rio">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M20 21c-2.2-3.4-4.9-5-8-5s-5.8 1.6-8 5" />
-                  <circle cx="12" cy="9" r="4" />
-                </svg>
-              </summary>
-              <div className="popover-card user-panel">
-                <div>
-                  <p className="kicker">{"Usu\u00e1rio"}</p>
-                  <h3>{"Dados completos"}</h3>
-                  <p className="report-meta">{"Perfil e informa\u00e7\u00f5es cadastrais"}</p>
-                </div>
-                <div className="user-details">
-                  {userInfo.map((item) => (
-                    <div key={item.label} className="detail-item">
-                      <span>{item.label}</span>
-                      <strong>{item.value}</strong>
-                    </div>
-                  ))}
-                </div>
-                <div className="user-actions">
-                  <LogoutButton />
-                </div>
-              </div>
-            </details>
-          </div>
+          <HeaderPopovers notifications={notifications} userInfo={userInfo} />
         </div>
       </header>
 
@@ -296,18 +379,138 @@ export default async function HomePage() {
           ))}
       </section>
 
+      <section className="home-overview">
+        <div className="kpi-grid">
+          {kpiCards.map((item) => (
+            <article key={item.label} className="kpi-card">
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
+            </article>
+          ))}
+        </div>
+        <div className="alert-card">
+          <div>
+            <p className="kicker">{"Alertas"}</p>
+            <h3>{"Atenções importantes"}</h3>
+          </div>
+          <div className="alert-list">
+            {alerts.map((alert) => (
+              <div key={alert.title} className={`alert-item ${alert.tone}`}>
+                <strong>{alert.title}</strong>
+                <span>{alert.detail}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="home-quick">
+        <div className="quick-actions">
+          <div>
+            <p className="kicker">{"Atalhos rápidos"}</p>
+            <h2>{"Acesso rápido aos módulos"}</h2>
+            <p className="section-text">
+              {"Botões grandes para ir direto ao que você precisa."}
+            </p>
+          </div>
+          <div className="quick-grid">
+            {quickActions.map((item) => (
+              <a key={item.label} className="quick-card" href={item.href}>
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </div>
+        <UserFavorites />
+      </section>
+
+      <section className="home-events">
+        <article className="events-card">
+          <div>
+            <p className="kicker">{"Agenda semanal"}</p>
+            <h3>{"Pr\u00f3ximos encontros"}</h3>
+            <p className="report-meta">{"Programa\u00e7\u00e3o resumida da semana"}</p>
+          </div>
+          <ul>
+            {weeklyEvents.map((event) => (
+              <li key={event.title}>
+                <span className="event-icon" aria-hidden="true">●</span>
+                <div>
+                  <strong>{event.title}</strong>
+                  <span>{event.time}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </article>
+        <article className="calendar-card">
+          <div>
+            <p className="kicker">{"Semana"}</p>
+            <h3>{"Mini-calendário"}</h3>
+            <p className="report-meta">{"Visão rápida dos encontros"}</p>
+          </div>
+          <div className="calendar-grid">
+            {weekCalendar.map((day) => (
+              <div key={day.day} className="calendar-item">
+                <span>{day.day}</span>
+                <strong>{day.label}</strong>
+                <small>{day.time || "-"}</small>
+              </div>
+            ))}
+          </div>
+          <div className="mini-attendance">
+            {attendance.map((item) => (
+              <div key={item.label} className="mini-bar">
+                <span style={{ height: `${Math.round((item.value / attendanceMax) * 100)}%` }} />
+                <small>{item.label}</small>
+              </div>
+            ))}
+          </div>
+          {isAdmin ? <EventForm /> : null}
+        </article>
+      </section>
+
+      <section className="home-timeline">
+        <div className="section-head">
+          <div>
+            <p className="kicker">{"Atividades"}</p>
+            <h2>{"Timeline recente"}</h2>
+            <p className="section-text">{"Acompanhe os últimos eventos do sistema."}</p>
+          </div>
+        </div>
+        <div className="timeline-list">
+          {timeline.map((item) => (
+            <div key={item.title} className="timeline-item">
+              <div>
+                <strong>{item.title}</strong>
+                <span>{item.detail}</span>
+              </div>
+              <small>{item.time}</small>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section className="module-grid">
         {modules
           .filter((module) => module.roles.includes(role))
-          .map((module) => (
-            <article key={module.title} className="module-card">
-              <h3>{module.title}</h3>
-              <p>{module.description}</p>
-            </article>
-          ))}
+          .map((module) => {
+            const moduleId = module.title
+              .toLowerCase()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "")
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-+|-+$/g, "");
+            return (
+              <article key={module.title} id={moduleId} className="module-card">
+                <h3>{module.title}</h3>
+                <p>{module.description}</p>
+              </article>
+            );
+          })}
       </section>
 
-      <section className="dashboard-reports">
+      <section id="relatorios" className="dashboard-reports">
         <div className="section-head">
           <div>
             <p className="kicker">{"Relat\u00f3rios"}</p>

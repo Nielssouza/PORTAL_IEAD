@@ -1,43 +1,35 @@
 import Image from "next/image";
 import ThemeToggle from "@/components/ThemeToggle";
+import { getDb } from "@/lib/db";
 import BibleVerseTicker from "@/components/BibleVerseTicker";
 import PageViewTracker from "@/components/PageViewTracker";
 import path from "path";
 import { readdir } from "fs/promises";
 
-const events = [
+const defaultEventIcon = (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 12h16M12 4v16" />
+  </svg>
+);
+
+const fallbackEvents = [
   {
     title: "Domingo de Celebração",
     time: "Dom 18:00",
     desc: "Louvor, palavra e comunhão para toda a família.",
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 12h16M12 4v16" />
-      </svg>
-    ),
   },
   {
     title: "Conexão de Jovens",
     time: "Sex 20:00",
     desc: "Uma noite vibrante de adoração e relacionamento.",
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M6 6h12v12H6z" />
-        <path d="M9 9h6v6H9z" />
-      </svg>
-    ),
   },
   {
     title: "Intercessão e Cura",
     time: "Qua 19:30",
     desc: "Clamor pela cidade e tempo de ministração.",
-    icon: (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 4c4 3 6 6 6 9a6 6 0 0 1-12 0c0-3 2-6 6-9z" />
-      </svg>
-    ),
   },
 ];
+
 
 const ministries = [
   "Louvor e Artes",
@@ -99,6 +91,27 @@ async function getVideoSources() {
   }
 }
 export default async function Home() {
+  const db = getDb();
+  const eventRows = db
+    .prepare(
+      "SELECT title, description, event_date as date, event_time as time FROM events WHERE date(event_date) >= date('now') ORDER BY event_date ASC, event_time ASC LIMIT 6"
+    )
+    .all() as Array<{ title: string; description: string | null; date: string; time: string }>;
+  const weekdayMap = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "S\u00e1b"];
+  const events =
+    eventRows.length > 0
+      ? eventRows.map((row) => {
+          const dateObj = new Date(`${row.date}T00:00:00`);
+          const dayLabel = weekdayMap[dateObj.getDay()] ?? "";
+          return {
+            title: row.title,
+            time: `${dayLabel} ${row.time}`.trim(),
+            desc: row.description || "Encontro especial da igreja.",
+            icon: defaultEventIcon,
+          };
+        })
+      : fallbackEvents.map((event) => ({ ...event, icon: defaultEventIcon }));
+
   const galleryImages = await getGalleryImages();
   const galleryRowA = [...galleryImages, ...galleryImages];
   const galleryRowB = [...galleryImages].reverse().concat([...galleryImages].reverse());
@@ -139,7 +152,7 @@ export default async function Home() {
           <div className="nav-actions">
             <ThemeToggle />
             <a className="nav-cta" href="/login">Área de login</a>
-            <a className="nav-cta" href="/registro">Cadastre-se</a>
+            <a className="nav-cta" href="/register">Cadastre-se</a>
             <a className="nav-cta" href="#visitar">Planeje sua visita</a>
           </div>
         </nav>

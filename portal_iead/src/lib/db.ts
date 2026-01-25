@@ -70,15 +70,55 @@ function initDb(database: Database.Database) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       body TEXT NOT NULL,
+      slug TEXT,
+      excerpt TEXT,
+      cover_url TEXT,
+      media_url TEXT,
+      tags TEXT,
       author_id INTEGER NOT NULL,
       created_at TEXT NOT NULL,
       FOREIGN KEY (author_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      description TEXT,
+      event_date TEXT NOT NULL,
+      event_time TEXT NOT NULL,
+      location TEXT,
+      created_by INTEGER,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (created_by) REFERENCES users(id)
     );
 
     CREATE TABLE IF NOT EXISTS page_views (
       path TEXT PRIMARY KEY,
       count INTEGER NOT NULL DEFAULT 0,
       updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS raffles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      description TEXT,
+      draw_date TEXT NOT NULL,
+      sales_deadline TEXT NOT NULL,
+      quota_total INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'Ativa',
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS raffle_sales (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      raffle_id INTEGER NOT NULL,
+      number TEXT NOT NULL,
+      buyer TEXT NOT NULL,
+      seller TEXT NOT NULL,
+      paid INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      UNIQUE(raffle_id, number),
+      FOREIGN KEY (raffle_id) REFERENCES raffles(id) ON DELETE CASCADE
     );
   `);
 
@@ -107,6 +147,39 @@ function initDb(database: Database.Database) {
   ensureColumn(database, "users", userColumns, "marital_status", "marital_status TEXT");
   ensureColumn(database, "users", userColumns, "age", "age INTEGER");
   ensureColumn(database, "users", userColumns, "address", "address TEXT");
+
+  const postColumns = getTableColumns(database, "posts");
+  ensureColumn(database, "posts", postColumns, "slug", "slug TEXT");
+  ensureColumn(database, "posts", postColumns, "excerpt", "excerpt TEXT");
+  ensureColumn(database, "posts", postColumns, "cover_url", "cover_url TEXT");
+  ensureColumn(database, "posts", postColumns, "media_url", "media_url TEXT");
+  ensureColumn(database, "posts", postColumns, "tags", "tags TEXT");
+
+  const eventColumns = getTableColumns(database, "events");
+  ensureColumn(database, "events", eventColumns, "title", "title TEXT");
+  ensureColumn(database, "events", eventColumns, "description", "description TEXT");
+  ensureColumn(database, "events", eventColumns, "event_date", "event_date TEXT");
+  ensureColumn(database, "events", eventColumns, "event_time", "event_time TEXT");
+  ensureColumn(database, "events", eventColumns, "location", "location TEXT");
+  ensureColumn(database, "events", eventColumns, "created_by", "created_by INTEGER");
+  ensureColumn(database, "events", eventColumns, "created_at", "created_at TEXT");
+
+  const raffleColumns = getTableColumns(database, "raffles");
+  ensureColumn(database, "raffles", raffleColumns, "name", "name TEXT");
+  ensureColumn(database, "raffles", raffleColumns, "description", "description TEXT");
+  ensureColumn(database, "raffles", raffleColumns, "draw_date", "draw_date TEXT");
+  ensureColumn(database, "raffles", raffleColumns, "sales_deadline", "sales_deadline TEXT");
+  ensureColumn(database, "raffles", raffleColumns, "quota_total", "quota_total INTEGER");
+  ensureColumn(database, "raffles", raffleColumns, "status", "status TEXT");
+  ensureColumn(database, "raffles", raffleColumns, "created_at", "created_at TEXT");
+
+  const raffleSalesColumns = getTableColumns(database, "raffle_sales");
+  ensureColumn(database, "raffle_sales", raffleSalesColumns, "raffle_id", "raffle_id INTEGER");
+  ensureColumn(database, "raffle_sales", raffleSalesColumns, "number", "number TEXT");
+  ensureColumn(database, "raffle_sales", raffleSalesColumns, "buyer", "buyer TEXT");
+  ensureColumn(database, "raffle_sales", raffleSalesColumns, "seller", "seller TEXT");
+  ensureColumn(database, "raffle_sales", raffleSalesColumns, "paid", "paid INTEGER");
+  ensureColumn(database, "raffle_sales", raffleSalesColumns, "created_at", "created_at TEXT");
 
   const existingAdmin = database
     .prepare("SELECT id FROM users WHERE role = 'admin' LIMIT 1")

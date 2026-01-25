@@ -12,7 +12,7 @@ export default async function CadastroManualPage() {
         <div className="section-head">
           <div>
             <p className="kicker">{"Administra\u00e7\u00e3o"}</p>
-            <h1>{"Cadastro manual de usu\u00e1rios"}</h1>
+            <h1>{"Cadastro de usu\u00e1rios"}</h1>
             <p className="section-text">
               {
                 "Cadastre manualmente ou importe uma planilha para agilizar o cadastro dos membros."

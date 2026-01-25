@@ -1,6 +1,8 @@
 import NoticeBoard from "@/components/NoticeBoard";
+import { requireAuth } from "@/lib/auth";
 
-export default function QuadroAvisosPage() {
+export default async function QuadroAvisosPage() {
+  await requireAuth();
   return (
     <main className="page board-page">
       <section className="section">
