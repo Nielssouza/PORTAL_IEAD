@@ -2203,6 +2203,15 @@ html[data-theme="blue"] .theme-pill.is-active {
   gap: 18px;
 }
 
+.raffle-sample-banner {
+  background: rgba(15, 23, 42, 0.04);
+  border-radius: 18px;
+  border: 1px dashed rgba(15, 23, 42, 0.18);
+  padding: 16px 18px;
+  display: grid;
+  gap: 6px;
+}
+
 .raffle-card {
   gap: 18px;
 }

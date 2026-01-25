@@ -48,6 +48,44 @@ const emptyForm = {
   status: "Ativa",
 };
 
+const sampleRaffles: Raffle[] = [
+  {
+    id: 0,
+    name: "Rifa Solidária - Janeiro",
+    description: "Ação de apoio social para arrecadação de recursos.",
+    drawDate: "10/02/2026",
+    salesDeadline: "05/02/2026",
+    quotaTotal: 200,
+    status: "Exemplo",
+    soldCount: 146,
+    paidCount: 120,
+    percent: 73,
+    sales: [
+      { id: 1, number: "001", buyer: "Maria Souza", seller: "João Lima", paid: 1, createdAt: "" },
+      { id: 2, number: "014", buyer: "Lucas Silva", seller: "Ana Ribeiro", paid: 0, createdAt: "" },
+      { id: 3, number: "055", buyer: "Carla Santos", seller: "João Lima", paid: 1, createdAt: "" },
+      { id: 4, number: "110", buyer: "Rafael Almeida", seller: "Pr. Sérgio", paid: 1, createdAt: "" },
+    ],
+  },
+  {
+    id: 1,
+    name: "Ação de Missões",
+    description: "Campanha de arrecadação para projetos missionários.",
+    drawDate: "20/03/2026",
+    salesDeadline: "15/03/2026",
+    quotaTotal: 120,
+    status: "Exemplo",
+    soldCount: 78,
+    paidCount: 52,
+    percent: 65,
+    sales: [
+      { id: 5, number: "007", buyer: "Fernanda Cruz", seller: "Equipe 1", paid: 1, createdAt: "" },
+      { id: 6, number: "033", buyer: "Igor Rocha", seller: "Equipe 2", paid: 0, createdAt: "" },
+      { id: 7, number: "070", buyer: "Helena Dias", seller: "Equipe 1", paid: 1, createdAt: "" },
+    ],
+  },
+];
+
 export default function RafflesManager() {
   const [raffles, setRaffles] = useState<Raffle[]>([]);
   const [loading, setLoading] = useState(false);
@@ -179,6 +217,15 @@ export default function RafflesManager() {
 
   return (
     <div className="raffles-wrapper">
+      {raffles.length === 0 ? (
+        <div className="raffle-sample-banner">
+          <p className="kicker">Exemplo</p>
+          <p className="section-text">
+            Nenhuma ação cadastrada ainda. Os cards abaixo são um exemplo do layout. Crie uma
+            ação para começar.
+          </p>
+        </div>
+      ) : null}
       <article className="report-card">
         <div>
           <p className="kicker">{TEXT.formTitle}</p>
@@ -236,9 +283,10 @@ export default function RafflesManager() {
       {loading ? <p className="section-text">Carregando ações...</p> : null}
 
       <div className="report-grid">
-        {raffles.map((raffle) => {
+        {(raffles.length > 0 ? raffles : sampleRaffles).map((raffle) => {
           const percent = raffle.percent ?? Math.round((raffle.soldCount / raffle.quotaTotal) * 100);
           const saleForm = saleForms[raffle.id] ?? { number: "", buyer: "", seller: "", paid: false };
+          const isSample = raffle.status === "Exemplo";
           return (
             <article key={raffle.id} className="report-card raffle-card">
               <div className="raffle-header">
@@ -248,17 +296,23 @@ export default function RafflesManager() {
                   <p className="report-meta">{raffle.description || "Sem descrição adicional."}</p>
                 </div>
                 <div className="raffle-actions">
-                  <span className="status-pill ativo">{raffle.status}</span>
-                  <a className="cta ghost" href={`/api/raffles/${raffle.id}/export`}>
-                    {TEXT.export}
-                  </a>
-                  <button className="cta ghost" type="button" onClick={() => startEdit(raffle)}>
-                    Editar ação
-                  </button>
+                  <span className={isSample ? "status-pill pendente" : "status-pill ativo"}>
+                    {raffle.status}
+                  </span>
+                  {isSample ? null : (
+                    <a className="cta ghost" href={`/api/raffles/${raffle.id}/export`}>
+                      {TEXT.export}
+                    </a>
+                  )}
+                  {isSample ? null : (
+                    <button className="cta ghost" type="button" onClick={() => startEdit(raffle)}>
+                      Editar ação
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {editingId === raffle.id ? (
+              {editingId === raffle.id && !isSample ? (
                 <form className="raffle-form" onSubmit={handleUpdate}>
                   <div className="raffle-form-grid">
                     <input
@@ -338,42 +392,44 @@ export default function RafflesManager() {
                 <span style={{ width: `${Math.min(percent, 100)}%` }} />
               </div>
 
-              <form className="raffle-sale-form" onSubmit={(event) => handleAddSale(raffle.id, event)}>
-                <div className="raffle-form-grid">
-                  <input
-                    type="text"
-                    placeholder="Número"
-                    value={saleForm.number}
-                    onChange={(event) => updateSaleForm(raffle.id, { number: event.target.value })}
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="Comprador"
-                    value={saleForm.buyer}
-                    onChange={(event) => updateSaleForm(raffle.id, { buyer: event.target.value })}
-                    required
-                  />
-                  <input
-                    type="text"
-                    placeholder="Vendedor"
-                    value={saleForm.seller}
-                    onChange={(event) => updateSaleForm(raffle.id, { seller: event.target.value })}
-                    required
-                  />
-                  <label className="checkbox-field">
+              {isSample ? null : (
+                <form className="raffle-sale-form" onSubmit={(event) => handleAddSale(raffle.id, event)}>
+                  <div className="raffle-form-grid">
                     <input
-                      type="checkbox"
-                      checked={saleForm.paid}
-                      onChange={(event) => updateSaleForm(raffle.id, { paid: event.target.checked })}
+                      type="text"
+                      placeholder="Número"
+                      value={saleForm.number}
+                      onChange={(event) => updateSaleForm(raffle.id, { number: event.target.value })}
+                      required
                     />
-                    Pago
-                  </label>
-                </div>
-                <button className="cta ghost" type="submit">
-                  {TEXT.addSale}
-                </button>
-              </form>
+                    <input
+                      type="text"
+                      placeholder="Comprador"
+                      value={saleForm.buyer}
+                      onChange={(event) => updateSaleForm(raffle.id, { buyer: event.target.value })}
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Vendedor"
+                      value={saleForm.seller}
+                      onChange={(event) => updateSaleForm(raffle.id, { seller: event.target.value })}
+                      required
+                    />
+                    <label className="checkbox-field">
+                      <input
+                        type="checkbox"
+                        checked={saleForm.paid}
+                        onChange={(event) => updateSaleForm(raffle.id, { paid: event.target.checked })}
+                      />
+                      Pago
+                    </label>
+                  </div>
+                  <button className="cta ghost" type="submit">
+                    {TEXT.addSale}
+                  </button>
+                </form>
+              )}
 
               <div className="table-scroll">
                 <table>
