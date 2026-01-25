@@ -41,7 +41,7 @@ a {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: url("/logo.jfif");
+  background-image: url("https://ljillcmdebyomomjvwxh.supabase.co/storage/v1/object/public/midias-portal-iead/logo.jfif");
   background-repeat: no-repeat;
   background-position: left 40% top 160px;
   background-size: clamp(320px, 48vw, 720px);

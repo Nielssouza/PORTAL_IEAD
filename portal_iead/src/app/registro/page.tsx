@@ -279,7 +279,7 @@ export default function RegistroPage() {
           <Link className="auth-logo" href="/">
             <div className="logo-shell">
               <Image
-                src="/logo.jfif"
+                src="https://ljillcmdebyomomjvwxh.supabase.co/storage/v1/object/public/midias-portal-iead/logo.jfif"
                 alt="Logo Assembleia de Deus"
                 width={72}
                 height={72}

@@ -189,7 +189,7 @@ export default async function Home() {
           <div className="brand">
             <div className="logo-shell">
               <Image
-                src="/logo.jfif"
+                src="https://ljillcmdebyomomjvwxh.supabase.co/storage/v1/object/public/midias-portal-iead/logo.jfif"
                 alt="Logo Assembleia de Deus"
                 width={76}
                 height={76}
