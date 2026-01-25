@@ -26,7 +26,10 @@ function loadEnv() {
 
 loadEnv();
 
-const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
+const connectionString =
+  process.env.HEROKU_APP_NAME && process.env.DATABASE_URL
+    ? process.env.DATABASE_URL
+    : process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
 if (!connectionString) {
   console.error("DATABASE_URL não configurado.");
   process.exit(1);
