@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getSessionUserByToken } from "@/lib/auth";
 
@@ -10,20 +10,24 @@ const TEXT = {
   duplicate: "Este número já foi vendido nesta ação.",
 };
 
-function requireAdmin(request: Request) {
+async function requireAdmin(request: NextRequest) {
   const token = request.cookies.get("auth_token")?.value;
-  const user = getSessionUserByToken(token);
+  const user = await getSessionUserByToken(token);
   if (!user || user.role !== "admin") return null;
   return user;
 }
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
-  const user = requireAdmin(request);
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await requireAdmin(request);
   if (!user) {
     return NextResponse.json({ error: TEXT.unauthorized }, { status: 401 });
   }
 
-  const raffleId = Number(params.id);
+  const { id } = await params;
+  const raffleId = Number(id);
   if (!Number.isFinite(raffleId)) {
     return NextResponse.json({ error: TEXT.missing }, { status: 400 });
   }
@@ -38,27 +42,28 @@ export async function POST(request: Request, { params }: { params: { id: string 
     return NextResponse.json({ error: TEXT.missing }, { status: 400 });
   }
 
-  const db = getDb();
-  const existing = db
-    .prepare("SELECT 1 FROM raffle_sales WHERE raffle_id = ? AND number = ? LIMIT 1")
-    .get(raffleId, number);
-  if (existing) {
+  const db = await getDb();
+  const existing = await db.query(
+    "SELECT 1 FROM raffle_sales WHERE raffle_id = $1 AND number = $2 LIMIT 1",
+    [raffleId, number]
+  );
+  if (existing.rows.length > 0) {
     return NextResponse.json({ error: TEXT.duplicate }, { status: 409 });
   }
 
   const now = new Date().toISOString();
-  const result = db
-    .prepare(
-      `
-      INSERT INTO raffle_sales (raffle_id, number, buyer, seller, paid, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+  const { rows } = await db.query(
     `
-    )
-    .run(raffleId, number, buyer, seller, paid, now);
+      INSERT INTO raffle_sales (raffle_id, number, buyer, seller, paid, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id
+    `,
+    [raffleId, number, buyer, seller, paid, now]
+  );
 
   return NextResponse.json({
     sale: {
-      id: result.lastInsertRowid,
+      id: rows[0].id,
       raffleId,
       number,
       buyer,

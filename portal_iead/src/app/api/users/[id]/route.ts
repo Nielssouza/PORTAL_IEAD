@@ -1,20 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getSessionUserByToken } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
 
 export const runtime = "nodejs";
 
-function requireAdmin(token?: string | null) {
-  const user = getSessionUserByToken(token);
+async function requireAdmin(token?: string | null) {
+  const user = await getSessionUserByToken(token);
   if (!user || user.role !== "admin") {
     return null;
   }
   return user;
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const admin = requireAdmin(request.cookies.get("auth_token")?.value);
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const admin = await requireAdmin(request.cookies.get("auth_token")?.value);
   if (!admin) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
@@ -34,19 +37,20 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: "Nome é obrigatório." }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await getDb();
   if (password) {
     const hash = hashPassword(password);
-    db.prepare(
-      "UPDATE users SET name = ?, role = ?, status = ?, password_hash = ? WHERE id = ?"
-    ).run(name, role, status, hash, params.id);
+    await db.query(
+      "UPDATE users SET name = $1, role = $2, status = $3, password_hash = $4 WHERE id = $5",
+      [name, role, status, hash, (await params).id]
+    );
   } else {
-    db.prepare("UPDATE users SET name = ?, role = ?, status = ? WHERE id = ?").run(
+    await db.query("UPDATE users SET name = $1, role = $2, status = $3 WHERE id = $4", [
       name,
       role,
       status,
-      params.id
-    );
+      (await params).id,
+    ]);
   }
 
   return NextResponse.json({ ok: true });

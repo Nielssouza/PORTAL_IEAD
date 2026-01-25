@@ -11,53 +11,65 @@ export type AuthUser = {
   status: "active" | "pending" | "disabled";
 };
 
+type SessionRow = {
+  id: number;
+  name: string;
+  email: string;
+  role: "admin" | "member";
+  status: "active" | "pending" | "disabled";
+  expires_at: string;
+};
+
 const SESSION_TTL_DAYS = 7;
 
-export function createSession(userId: number) {
-  const db = getDb();
+export async function createSession(userId: number) {
+  const db = await getDb();
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = new Date(
     Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000
   ).toISOString();
 
-  db.prepare(
-    "INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)"
-  ).run(token, userId, expiresAt);
+  await db.query(
+    "INSERT INTO sessions (token, user_id, expires_at) VALUES ($1, $2, $3)",
+    [token, userId, expiresAt]
+  );
 
   return { token, expiresAt };
 }
 
-export function clearSession(token?: string | null) {
+export async function clearSession(token?: string | null) {
   if (!token) return;
-  const db = getDb();
-  db.prepare("DELETE FROM sessions WHERE token = ?").run(token);
+  const db = await getDb();
+  await db.query("DELETE FROM sessions WHERE token = $1", [token]);
 }
 
-export function getSessionUserByToken(token?: string | null): AuthUser | null {
+export async function getSessionUserByToken(
+  token?: string | null
+): Promise<AuthUser | null> {
   if (!token) return null;
-  const db = getDb();
-  const row = db
-    .prepare(
-      `
+  const db = await getDb();
+  const { rows } = await db.query<SessionRow>(
+    `
       SELECT users.id as id, users.name as name, users.email as email, users.role as role, users.status as status, sessions.expires_at as expires_at
       FROM sessions
       JOIN users ON users.id = sessions.user_id
-      WHERE sessions.token = ?
+      WHERE sessions.token = $1
       LIMIT 1
-    `
-    )
-    .get(token);
+    `,
+    [token]
+  );
+  const row = rows[0];
 
   if (!row) return null;
 
   const expiresAt = new Date(row.expires_at as string);
   if (Number.isNaN(expiresAt.getTime()) || expiresAt <= new Date()) {
-    clearSession(token);
+    await clearSession(token);
     return null;
   }
 
   if (row.status !== "active") {
-    clearSession(token);
+    await clearSession(token);
     return null;
   }
 

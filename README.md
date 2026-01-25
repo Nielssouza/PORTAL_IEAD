@@ -27,6 +27,14 @@ cd portal_iead
 npm run dev
 ```
 
+## Conexão com o banco (DBeaver - Supabase)
+Use os dados abaixo (sem senha):
+
+- Host: aws-1-sa-east-1.pooler.supabase.com
+- Porta: 6543
+- Database: postgres
+- Usuário: postgres.ljillcmdebyomomjvwxh
+
 ## Endpoints de exemplo
 - `GET http://localhost:3000/api/health`
 - `GET http://localhost:3000/api/v1/example`

@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getSessionUserByToken } from "@/lib/auth";
 import { hashPassword } from "@/lib/password";
@@ -11,32 +11,30 @@ const TEXT = {
   emailTaken: "E-mail j\u00e1 cadastrado.",
 };
 
-function requireAdmin(token?: string | null) {
-  const user = getSessionUserByToken(token);
+async function requireAdmin(token?: string | null) {
+  const user = await getSessionUserByToken(token);
   if (!user || user.role !== "admin") {
     return null;
   }
   return user;
 }
 
-export async function GET(request: Request) {
-  const admin = requireAdmin(request.cookies.get("auth_token")?.value);
+export async function GET(request: NextRequest) {
+  const admin = await requireAdmin(request.cookies.get("auth_token")?.value);
   if (!admin) {
     return NextResponse.json({ error: TEXT.unauthorized }, { status: 401 });
   }
 
-  const db = getDb();
-  const users = db
-    .prepare(
-      "SELECT id, name, email, role, status, created_at as createdAt FROM users ORDER BY created_at DESC"
-    )
-    .all();
+  const db = await getDb();
+  const { rows: users } = await db.query(
+    "SELECT id, name, email, role, status, created_at as \"createdAt\" FROM users ORDER BY created_at DESC"
+  );
 
   return NextResponse.json({ users });
 }
 
-export async function POST(request: Request) {
-  const admin = requireAdmin(request.cookies.get("auth_token")?.value);
+export async function POST(request: NextRequest) {
+  const admin = await requireAdmin(request.cookies.get("auth_token")?.value);
   if (!admin) {
     return NextResponse.json({ error: TEXT.unauthorized }, { status: 401 });
   }
@@ -51,19 +49,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: TEXT.required }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await getDb();
   const now = new Date().toISOString();
   const hash = hashPassword(password);
 
   try {
-    const result = db
-      .prepare(
-        "INSERT INTO users (name, email, password_hash, role, status, created_at) VALUES (?, ?, ?, ?, 'active', ?)"
-      )
-      .run(name, email, hash, role, now);
+    const { rows } = await db.query(
+      "INSERT INTO users (name, email, password_hash, role, status, created_at) VALUES ($1, $2, $3, $4, 'active', $5) RETURNING id",
+      [name, email, hash, role, now]
+    );
 
     return NextResponse.json({
-      user: { id: result.lastInsertRowid, name, email, role, status: "active", createdAt: now },
+      user: { id: rows[0].id, name, email, role, status: "active", createdAt: now },
     });
   } catch (error) {
     return NextResponse.json({ error: TEXT.emailTaken }, { status: 400 });

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { FormEvent } from "react";
@@ -59,21 +60,21 @@ export default function LoginPage() {
 
       <section className="auth-card">
         <div className="auth-brand">
-          <a className="auth-logo" href="/">
-          <div className="logo-shell">
-            <Image
-              src="/logo.jfif"
-              alt="Logo Assembleia de Deus"
-              width={72}
-              height={72}
-              className="logo"
-            />
-          </div>
-          <div>
-            <p className="brand-title">Assembleia de Deus</p>
-            <span className="brand-sub">Ministério Missão Jardim das Oliveiras</span>
-          </div>
-        </a>
+          <Link className="auth-logo" href="/">
+            <div className="logo-shell">
+              <Image
+                src="/logo.jfif"
+                alt="Logo Assembleia de Deus"
+                width={72}
+                height={72}
+                className="logo"
+              />
+            </div>
+            <div>
+              <p className="brand-title">Assembleia de Deus</p>
+              <span className="brand-sub">Ministério Missão Jardim das Oliveiras</span>
+            </div>
+          </Link>
         </div>
         <div>
           <p className="kicker">Acesso restrito</p>
@@ -108,9 +109,9 @@ export default function LoginPage() {
             <button className="cta primary" type="submit" disabled={loading}>
               {loading ? "Entrando..." : "Entrar"}
             </button>
-            <a className="cta ghost" href="/register">
+            <Link className="cta ghost" href="/register">
               Cadastre-se
-            </a>
+            </Link>
           </div>
         </form>
       </section>

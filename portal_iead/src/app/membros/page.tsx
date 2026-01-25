@@ -22,11 +22,10 @@ type MemberRow = {
   birthDate: string | null;
 };
 
-function getMembers(): MemberRow[] {
-  const db = getDb();
-  return db
-    .prepare(
-      `
+async function getMembers(): Promise<MemberRow[]> {
+  const db = await getDb();
+  const { rows } = await db.query<MemberRow>(
+    `
       SELECT
         id,
         name,
@@ -34,25 +33,25 @@ function getMembers(): MemberRow[] {
         cpf,
         role,
         status,
-        created_at as createdAt,
-        member_type as memberType,
+        created_at as "createdAt",
+        member_type as "memberType",
         baptized,
-        has_role as hasRole,
-        role_title as roleTitle,
+        has_role as "hasRole",
+        role_title as "roleTitle",
         profession,
-        education_level as educationLevel,
-        marital_status as maritalStatus,
-        birth_date as birthDate
+        education_level as "educationLevel",
+        marital_status as "maritalStatus",
+        birth_date as "birthDate"
       FROM users
       ORDER BY created_at DESC
     `
-    )
-    .all() as MemberRow[];
+  );
+  return rows;
 }
 
 export default async function MembrosPage() {
   await requireAdmin();
-  const members = getMembers();
+  const members = await getMembers();
 
   return (
     <main className="page members-page">

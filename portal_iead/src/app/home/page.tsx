@@ -5,6 +5,8 @@ import EventForm from "@/components/EventForm";
 import HeaderPopovers from "@/components/HeaderPopovers";
 import QuickNavSearch from "@/components/QuickNavSearch";
 
+export const dynamic = "force-dynamic";
+
 const modules = [
   {
     title: "Secretaria",
@@ -48,7 +50,9 @@ const modules = [
   },
 ];
 
-const navLinks = [
+type Role = "admin" | "member";
+
+const navLinks: Array<{ label: string; href: string; roles: Role[] }> = [
   { label: "Membros", href: "/membros", roles: ["admin"] },
   { label: "Secretaria", href: "/secretaria", roles: ["admin"] },
   { label: "Tesouraria", href: "/tesouraria", roles: ["admin"] },
@@ -58,39 +62,44 @@ const navLinks = [
   { label: "Sorteios", href: "/sorteios", roles: ["admin"] },
   { label: "Quadro de avisos", href: "/quadro-avisos", roles: ["admin", "member"] },
   { label: "Cadastro manual", href: "/cadastro-manual", roles: ["admin"] },
-] as const;
+];
 
 export default async function HomePage() {
   const user = await requireAuth();
   const isAdmin = user.role === "admin";
   const role = isAdmin ? "admin" : "member";
   const allowedLinks = navLinks.filter((link) => link.roles.includes(role));
-  const db = getDb();
-  const viewRows = db
-    .prepare("SELECT path, count FROM page_views WHERE path IN (?, ?, ?)")
-    .all("/", "/register", "/login") as Array<{ path: string; count: number }>;
-  const viewMap = new Map(viewRows.map((row) => [row.path, row.count]));
+  const db = await getDb();
+  const viewRows: Array<{ path: string; count: number | string }> = (
+    await db.query<{ path: string; count: number | string }>(
+      "SELECT path, count FROM page_views WHERE path IN ($1, $2, $3)",
+      ["/", "/register", "/login"]
+    )
+  ).rows;
+  const viewMap = new Map(viewRows.map((row) => [row.path, Number(row.count)]));
   const indexViews = viewMap.get("/") ?? 0;
   const registerViews = viewMap.get("/register") ?? 0;
   const loginViews = viewMap.get("/login") ?? 0;
   const todayKey = new Date().toISOString().slice(0, 10);
-  const todayRegistrationsRow = db
-    .prepare("SELECT COUNT(*) as count FROM users WHERE date(created_at) = ?")
-    .get(todayKey) as { count: number };
-  const pendingRow = db
-    .prepare("SELECT COUNT(*) as count FROM users WHERE status = 'pending'")
-    .get() as { count: number };
-  const approvalsRow = db
-    .prepare("SELECT COUNT(*) as count FROM users WHERE status = 'active' AND date(created_at) = ?")
-    .get(todayKey) as { count: number };
-  const totalUsersRow = db
-    .prepare("SELECT COUNT(*) as count FROM users")
-    .get() as { count: number };
+  const todayRegistrationsRow = (await db.query<{ count: string }>(
+    "SELECT COUNT(*) as count FROM users WHERE created_at::date = $1::date",
+    [todayKey]
+  )).rows[0];
+  const pendingRow = (await db.query<{ count: string }>(
+    "SELECT COUNT(*) as count FROM users WHERE status = 'pending'"
+  )).rows[0];
+  const approvalsRow = (await db.query<{ count: string }>(
+    "SELECT COUNT(*) as count FROM users WHERE status = 'active' AND created_at::date = $1::date",
+    [todayKey]
+  )).rows[0];
+  const totalUsersRow = (await db.query<{ count: string }>(
+    "SELECT COUNT(*) as count FROM users"
+  )).rows[0];
 
-  const todayRegistrations = todayRegistrationsRow?.count ?? 0;
-  const pendingCount = pendingRow?.count ?? 0;
-  const approvalsToday = approvalsRow?.count ?? 0;
-  const totalUsers = totalUsersRow?.count ?? 0;
+  const todayRegistrations = Number(todayRegistrationsRow?.count ?? 0);
+  const pendingCount = Number(pendingRow?.count ?? 0);
+  const approvalsToday = Number(approvalsRow?.count ?? 0);
+  const totalUsers = Number(totalUsersRow?.count ?? 0);
 
   const kpiCards = [
     { label: "Cadastros hoje", value: String(todayRegistrations) },
@@ -126,11 +135,21 @@ export default async function HomePage() {
   ];
 
   const weekdayMap = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "S\u00e1b"];
-  const eventRows = db
-    .prepare(
-      "SELECT title, description, event_date as date, event_time as time FROM events WHERE date(event_date) >= date('now') ORDER BY event_date ASC, event_time ASC LIMIT 14"
+  const eventRows: Array<{
+    title: string;
+    description: string | null;
+    date: string;
+    time: string;
+  }> = (
+    await db.query<{
+      title: string;
+      description: string | null;
+      date: string;
+      time: string;
+    }>(
+      "SELECT title, description, event_date as date, event_time as time FROM events WHERE event_date >= CURRENT_DATE ORDER BY event_date ASC, event_time ASC LIMIT 14"
     )
-    .all() as Array<{ title: string; description: string | null; date: string; time: string }>;
+  ).rows;
 
   const fallbackEvents = [
     { title: "Culto de Celebra\u00e7\u00e3o", time: "Dom 18:00", date: "" },
@@ -193,8 +212,20 @@ export default async function HomePage() {
       time: "Ontem 10:05",
     },
   ];
-  const userDetails = db
-    .prepare(
+  const userDetails = (
+    await db.query<{
+      cpf: string | null;
+      birth_date: string | null;
+      member_type: string | null;
+      has_role: number | null;
+      role_title: string | null;
+      baptized: number | null;
+      baptism_date: string | null;
+      profession: string | null;
+      education_level: string | null;
+      marital_status: string | null;
+      address: string | null;
+    }>(
       `
         SELECT
           cpf,
@@ -209,25 +240,12 @@ export default async function HomePage() {
           marital_status,
           address
         FROM users
-        WHERE id = ?
+        WHERE id = $1
         LIMIT 1
-      `
+      `,
+      [user.id]
     )
-    .get(user.id) as
-      | {
-          cpf: string | null;
-          birth_date: string | null;
-          member_type: string | null;
-          has_role: number | null;
-          role_title: string | null;
-          baptized: number | null;
-          baptism_date: string | null;
-          profession: string | null;
-          education_level: string | null;
-          marital_status: string | null;
-          address: string | null;
-        }
-      | undefined;
+  ).rows[0];
 
   const humanize = (value?: string | null) => {
     if (!value) return "-";

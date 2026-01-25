@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import PageViewTracker from "@/components/PageViewTracker";
@@ -275,7 +276,7 @@ export default function RegistroPage() {
       <PageViewTracker path="/register" />
       <section className="auth-card register-card">
         <div className="auth-brand">
-          <a className="auth-logo" href="/">
+          <Link className="auth-logo" href="/">
             <div className="logo-shell">
               <Image
                 src="/logo.jfif"
@@ -289,7 +290,7 @@ export default function RegistroPage() {
               <p className="brand-title">Assembleia de Deus</p>
               <span className="brand-sub">{TEXT.brandSubtitle}</span>
             </div>
-          </a>
+          </Link>
         </div>
         <div>
           <p className="kicker">{TEXT.cadastro}</p>
@@ -521,9 +522,9 @@ export default function RegistroPage() {
             <button className="cta primary" type="submit" disabled={loading}>
               {loading ? "Enviando..." : "Enviar cadastro"}
             </button>
-            <a className="cta ghost" href="/login">
+            <Link className="cta ghost" href="/login">
               {TEXT.jaTenhoAcesso}
-            </a>
+            </Link>
           </div>
         </form>
       </section>

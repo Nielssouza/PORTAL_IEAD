@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getSessionUserByToken } from "@/lib/auth";
 
@@ -10,69 +10,65 @@ const TEXT = {
   invalid: "Total de quotas inválido.",
 };
 
-function requireAdmin(request: Request) {
+async function requireAdmin(request: NextRequest) {
   const token = request.cookies.get("auth_token")?.value;
-  const user = getSessionUserByToken(token);
+  const user = await getSessionUserByToken(token);
   if (!user || user.role !== "admin") return null;
   return user;
 }
 
-export async function GET(request: Request) {
-  const user = requireAdmin(request);
+export async function GET(request: NextRequest) {
+  const user = await requireAdmin(request);
   if (!user) {
     return NextResponse.json({ error: TEXT.unauthorized }, { status: 401 });
   }
 
-  const db = getDb();
-  const raffles = db
-    .prepare(
-      `
-      SELECT
-        r.id,
-        r.name,
-        r.description,
-        r.draw_date as drawDate,
-        r.sales_deadline as salesDeadline,
-        r.quota_total as quotaTotal,
-        r.status,
-        r.created_at as createdAt,
-        COUNT(s.id) as soldCount,
-        SUM(CASE WHEN s.paid = 1 THEN 1 ELSE 0 END) as paidCount
-      FROM raffles r
-      LEFT JOIN raffle_sales s ON s.raffle_id = r.id
-      GROUP BY r.id
-      ORDER BY r.created_at DESC
-    `
-    )
-    .all() as Array<{
+  const db = await getDb();
+  const raffles: Array<{
     id: number;
     name: string;
     description: string | null;
     drawDate: string;
     salesDeadline: string;
-    quotaTotal: number;
+    quotaTotal: number | string;
     status: string;
     createdAt: string;
-    soldCount: number;
-    paidCount: number | null;
-  }>;
-
-  const sales = db
-    .prepare(
+    soldCount: number | string;
+    paidCount: number | string | null;
+  }> = (
+    await db.query<{
+      id: number;
+      name: string;
+      description: string | null;
+      drawDate: string;
+      salesDeadline: string;
+      quotaTotal: number | string;
+      status: string;
+      createdAt: string;
+      soldCount: number | string;
+      paidCount: number | string | null;
+    }>(
       `
       SELECT
-        id,
-        raffle_id as raffleId,
-        number,
-        buyer,
-        seller,
-        paid,
-        created_at as createdAt
-      FROM raffle_sales
-      ORDER BY created_at DESC
+        r.id,
+        r.name,
+        r.description,
+        r.draw_date as "drawDate",
+        r.sales_deadline as "salesDeadline",
+        r.quota_total as "quotaTotal",
+        r.status,
+        r.created_at as "createdAt",
+        COUNT(s.id) as "soldCount",
+        SUM(CASE WHEN s.paid = 1 THEN 1 ELSE 0 END) as "paidCount"
+      FROM raffles r
+      LEFT JOIN raffle_sales s ON s.raffle_id = r.id
+      GROUP BY r.id, r.name, r.description, r.draw_date, r.sales_deadline, r.quota_total, r.status, r.created_at
+      ORDER BY r.created_at DESC
     `
     )
-    .all() as Array<{
+  ).rows;
+
+  const { rows: sales } = await db.query<{
     id: number;
     raffleId: number;
     number: string;
@@ -80,7 +76,20 @@ export async function GET(request: Request) {
     seller: string;
     paid: number;
     createdAt: string;
-  }>;
+  }>(
+    `
+      SELECT
+        id,
+        raffle_id as "raffleId",
+        number,
+        buyer,
+        seller,
+        paid,
+        created_at as "createdAt"
+      FROM raffle_sales
+      ORDER BY created_at DESC
+    `
+  );
 
   const salesByRaffle = new Map<number, typeof sales>();
   for (const sale of sales) {
@@ -91,13 +100,16 @@ export async function GET(request: Request) {
   }
 
   const payload = raffles.map((raffle) => {
-    const soldCount = raffle.soldCount ?? 0;
+    const quotaTotal = Number(raffle.quotaTotal ?? 0);
+    const soldCount = Number(raffle.soldCount ?? 0);
+    const paidCount = Number(raffle.paidCount ?? 0);
     const percent =
-      raffle.quotaTotal > 0 ? Math.round((soldCount / raffle.quotaTotal) * 100) : 0;
+      quotaTotal > 0 ? Math.round((soldCount / quotaTotal) * 100) : 0;
     return {
       ...raffle,
+      quotaTotal,
       soldCount,
-      paidCount: raffle.paidCount ?? 0,
+      paidCount,
       percent,
       sales: salesByRaffle.get(raffle.id) ?? [],
     };
@@ -106,8 +118,8 @@ export async function GET(request: Request) {
   return NextResponse.json({ raffles: payload });
 }
 
-export async function POST(request: Request) {
-  const user = requireAdmin(request);
+export async function POST(request: NextRequest) {
+  const user = await requireAdmin(request);
   if (!user) {
     return NextResponse.json({ error: TEXT.unauthorized }, { status: 401 });
   }
@@ -128,20 +140,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: TEXT.invalid }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await getDb();
   const now = new Date().toISOString();
-  const result = db
-    .prepare(
-      `
-      INSERT INTO raffles (name, description, draw_date, sales_deadline, quota_total, status, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+  const { rows } = await db.query(
     `
-    )
-    .run(name, description, drawDate, salesDeadline, quotaTotal, status, now);
+      INSERT INTO raffles (name, description, draw_date, sales_deadline, quota_total, status, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id
+    `,
+    [name, description, drawDate, salesDeadline, quotaTotal, status, now]
+  );
 
   return NextResponse.json({
     raffle: {
-      id: result.lastInsertRowid,
+      id: rows[0].id,
       name,
       description,
       drawDate,

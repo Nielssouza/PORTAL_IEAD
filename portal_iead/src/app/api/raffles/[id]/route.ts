@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getSessionUserByToken } from "@/lib/auth";
 
@@ -10,20 +10,24 @@ const TEXT = {
   invalid: "Total de quotas inválido.",
 };
 
-function requireAdmin(request: Request) {
+async function requireAdmin(request: NextRequest) {
   const token = request.cookies.get("auth_token")?.value;
-  const user = getSessionUserByToken(token);
+  const user = await getSessionUserByToken(token);
   if (!user || user.role !== "admin") return null;
   return user;
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
-  const user = requireAdmin(request);
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await requireAdmin(request);
   if (!user) {
     return NextResponse.json({ error: TEXT.unauthorized }, { status: 401 });
   }
 
-  const raffleId = Number(params.id);
+  const { id } = await params;
+  const raffleId = Number(id);
   if (!Number.isFinite(raffleId)) {
     return NextResponse.json({ error: TEXT.missing }, { status: 400 });
   }
@@ -44,14 +48,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: TEXT.invalid }, { status: 400 });
   }
 
-  const db = getDb();
-  db.prepare(
+  const db = await getDb();
+  await db.query(
     `
     UPDATE raffles
-    SET name = ?, description = ?, draw_date = ?, sales_deadline = ?, quota_total = ?, status = ?
-    WHERE id = ?
-  `
-  ).run(name, description, drawDate, salesDeadline, quotaTotal, status, raffleId);
+    SET name = $1, description = $2, draw_date = $3, sales_deadline = $4, quota_total = $5, status = $6
+    WHERE id = $7
+  `,
+    [name, description, drawDate, salesDeadline, quotaTotal, status, raffleId]
+  );
 
   return NextResponse.json({ ok: true });
 }

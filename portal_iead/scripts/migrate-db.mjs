@@ -1,17 +1,47 @@
-﻿import fs from "fs";
+import { Pool } from "pg";
+import fs from "fs";
 import path from "path";
-import Database from "better-sqlite3";
 
-const dbPath = path.join(process.cwd(), "data", "portal.db");
-fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+function loadEnv() {
+  const envPath = path.join(process.cwd(), ".env");
+  if (!fs.existsSync(envPath)) return;
+  const raw = fs.readFileSync(envPath, "utf-8");
+  raw.split(/\r?\n/).forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) return;
+    const idx = trimmed.indexOf("=");
+    if (idx === -1) return;
+    const key = trimmed.slice(0, idx).trim();
+    let value = trimmed.slice(idx + 1).trim();
+    if (!key || process.env[key]) return;
+    if (
+      (value.startsWith("\"") && value.endsWith("\"")) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] = value;
+  });
+}
 
-const db = new Database(dbPath);
+loadEnv();
 
-db.exec("PRAGMA journal_mode = WAL;");
+const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error("DATABASE_URL não configurado.");
+  process.exit(1);
+}
 
-db.exec(`
+const ssl =
+  connectionString.includes("localhost") || connectionString.includes("127.0.0.1")
+    ? undefined
+    : { rejectUnauthorized: false };
+
+const db = new Pool({ connectionString, ssl, max: 3 });
+
+await db.query(`
   CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     cpf TEXT UNIQUE,
@@ -33,61 +63,67 @@ db.exec(`
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'member',
     status TEXT NOT NULL DEFAULT 'pending',
-    created_at TEXT NOT NULL
+    created_at TIMESTAMPTZ NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS sessions (
     token TEXT PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    expires_at TEXT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TIMESTAMPTZ NOT NULL
   );
 
   CREATE TABLE IF NOT EXISTS posts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
     body TEXT NOT NULL,
-    author_id INTEGER NOT NULL,
-    created_at TEXT NOT NULL,
-    FOREIGN KEY (author_id) REFERENCES users(id)
+    slug TEXT,
+    excerpt TEXT,
+    cover_url TEXT,
+    media_url TEXT,
+    tags TEXT,
+    author_id INTEGER NOT NULL REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS events (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    event_date DATE NOT NULL,
+    event_time TEXT NOT NULL,
+    location TEXT,
+    created_by INTEGER REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS page_views (
+    path TEXT PRIMARY KEY,
+    count INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS raffles (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    draw_date DATE NOT NULL,
+    sales_deadline DATE NOT NULL,
+    quota_total INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Ativa',
+    created_at TIMESTAMPTZ NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS raffle_sales (
+    id SERIAL PRIMARY KEY,
+    raffle_id INTEGER NOT NULL REFERENCES raffles(id) ON DELETE CASCADE,
+    number TEXT NOT NULL,
+    buyer TEXT NOT NULL,
+    seller TEXT NOT NULL,
+    paid INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL,
+    UNIQUE(raffle_id, number)
   );
 `);
 
-function getTableColumns(database, table) {
-  const rows = database.prepare(`PRAGMA table_info(${table})`).all();
-  return new Set(rows.map((row) => row.name));
-}
-
-function ensureColumn(database, table, columns, name, definition, added) {
-  if (columns.has(name)) return;
-  database.exec(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
-  columns.add(name);
-  added.push(name);
-}
-
-const columns = getTableColumns(db, "users");
-const added = [];
-
-ensureColumn(db, "users", columns, "status", "status TEXT NOT NULL DEFAULT 'pending'", added);
-ensureColumn(db, "users", columns, "cpf", "cpf TEXT", added);
-ensureColumn(db, "users", columns, "father_name", "father_name TEXT", added);
-ensureColumn(db, "users", columns, "father_cpf", "father_cpf TEXT", added);
-ensureColumn(db, "users", columns, "mother_name", "mother_name TEXT", added);
-ensureColumn(db, "users", columns, "mother_cpf", "mother_cpf TEXT", added);
-ensureColumn(db, "users", columns, "birth_date", "birth_date TEXT", added);
-ensureColumn(db, "users", columns, "member_type", "member_type TEXT", added);
-ensureColumn(db, "users", columns, "has_role", "has_role INTEGER", added);
-ensureColumn(db, "users", columns, "role_title", "role_title TEXT", added);
-ensureColumn(db, "users", columns, "baptized", "baptized INTEGER", added);
-ensureColumn(db, "users", columns, "baptism_date", "baptism_date TEXT", added);
-ensureColumn(db, "users", columns, "profession", "profession TEXT", added);
-ensureColumn(db, "users", columns, "education_level", "education_level TEXT", added);
-ensureColumn(db, "users", columns, "marital_status", "marital_status TEXT", added);
-ensureColumn(db, "users", columns, "age", "age INTEGER", added);
-ensureColumn(db, "users", columns, "address", "address TEXT", added);
-
-if (added.length > 0) {
-  console.log(`Colunas adicionadas: ${added.join(", ")}`);
-} else {
-  console.log("Nenhuma coluna nova. Schema ja estava atualizado.");
-}
+console.log("Migração concluída.");
+await db.end();

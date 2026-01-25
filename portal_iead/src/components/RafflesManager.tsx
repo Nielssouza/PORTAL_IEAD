@@ -116,10 +116,13 @@ export default function RafflesManager() {
   }, []);
 
   function updateSaleForm(raffleId: number, patch: Partial<{ number: string; buyer: string; seller: string; paid: boolean }>) {
-    setSaleForms((prev) => ({
-      ...prev,
-      [raffleId]: { number: "", buyer: "", seller: "", paid: false, ...prev[raffleId], ...patch },
-    }));
+    setSaleForms((prev) => {
+      const current = prev[raffleId] ?? { number: "", buyer: "", seller: "", paid: false };
+      return {
+        ...prev,
+        [raffleId]: { ...current, ...patch },
+      };
+    });
   }
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {

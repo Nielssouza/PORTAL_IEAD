@@ -11,20 +11,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Path inv\u00e1lido." }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await getDb();
   const now = new Date().toISOString();
 
-  db.prepare(
+  await db.query(
     `
     INSERT INTO page_views (path, count, updated_at)
-    VALUES (?, 1, ?)
-    ON CONFLICT(path) DO UPDATE SET count = count + 1, updated_at = excluded.updated_at
-  `
-  ).run(path, now);
+    VALUES ($1, 1, $2)
+    ON CONFLICT (path) DO UPDATE SET count = page_views.count + 1, updated_at = EXCLUDED.updated_at
+  `,
+    [path, now]
+  );
 
-  const row = db.prepare("SELECT count FROM page_views WHERE path = ?").get(path) as
-    | { count: number }
-    | undefined;
+  const row = (await db.query<{ count: number }>(
+    "SELECT count FROM page_views WHERE path = $1",
+    [path]
+  )).rows[0];
 
-  return NextResponse.json({ ok: true, path, count: row?.count ?? 0 });
+  return NextResponse.json({ ok: true, path, count: Number(row?.count ?? 0) });
 }

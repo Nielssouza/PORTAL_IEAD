@@ -5,6 +5,15 @@ import { verifyPassword } from "@/lib/password";
 
 export const runtime = "nodejs";
 
+type DbUser = {
+  id: number;
+  name: string;
+  email: string;
+  password_hash: string;
+  role: string;
+  status: string;
+};
+
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const identifierRaw = String(body.identifier ?? body.email ?? "").trim();
@@ -15,12 +24,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Credenciais inválidas." }, { status: 400 });
   }
 
-  const db = getDb();
-  const user = db
-    .prepare(
-      "SELECT id, name, email, password_hash, role, status FROM users WHERE email = ? OR LOWER(name) = ? LIMIT 1"
-    )
-    .get(identifierLower, identifierLower);
+  const db = await getDb();
+  const { rows } = await db.query<DbUser>(
+    "SELECT id, name, email, password_hash, role, status FROM users WHERE email = $1 OR LOWER(name) = $2 LIMIT 1",
+    [identifierLower, identifierLower]
+  );
+  const user = rows[0];
 
   if (!user || !verifyPassword(password, user.password_hash)) {
     return NextResponse.json({ error: "Usuário ou senha incorretos." }, { status: 401 });
@@ -36,7 +45,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const session = createSession(user.id);
+  const session = await createSession(user.id);
   const response = NextResponse.json({
     ok: true,
     user: { id: user.id, name: user.name, email: user.email, role: user.role },
@@ -48,6 +57,7 @@ export async function POST(request: Request) {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
+    secure: process.env.NODE_ENV === "production",
     expires: new Date(session.expiresAt),
   });
 

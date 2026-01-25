@@ -1,33 +1,26 @@
-﻿import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getSessionUserByToken } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
+type PostRow = {
+  id: number;
+  title: string;
+  body: string;
+  slug: string | null;
+  excerpt: string | null;
+  coverUrl: string | null;
+  mediaUrl: string | null;
+  tags: string | null;
+  createdAt: string;
+  author: string;
+};
+
 const TEXT = {
   unauthorized: "N\u00e3o autorizado",
   missingFields: "Preencha t\u00edtulo e mensagem.",
 };
-
-function ensurePostColumns(db: ReturnType<typeof getDb>) {
-  const columns = db
-    .prepare("PRAGMA table_info(posts)")
-    .all()
-    .map((row) => row.name as string);
-  const columnSet = new Set(columns);
-
-  const ensure = (name: string, definition: string) => {
-    if (columnSet.has(name)) return;
-    db.exec(`ALTER TABLE posts ADD COLUMN ${definition}`);
-    columnSet.add(name);
-  };
-
-  ensure("slug", "slug TEXT");
-  ensure("excerpt", "excerpt TEXT");
-  ensure("cover_url", "cover_url TEXT");
-  ensure("media_url", "media_url TEXT");
-  ensure("tags", "tags TEXT");
-}
 
 function slugify(value: string) {
   return value
@@ -56,39 +49,38 @@ function normalizeTags(input: string | string[]) {
 }
 
 export async function GET() {
-  const db = getDb();
-  ensurePostColumns(db);
-  const posts = db
-    .prepare(
-      `
+  const db = await getDb();
+  const { rows: posts } = await db.query<PostRow>(
+    `
       SELECT
         posts.id,
         posts.title,
         posts.body,
         posts.slug,
         posts.excerpt,
-        posts.cover_url as coverUrl,
-        posts.media_url as mediaUrl,
+        posts.cover_url as "coverUrl",
+        posts.media_url as "mediaUrl",
         posts.tags,
-        posts.created_at as createdAt,
+        posts.created_at as "createdAt",
         users.name as author
       FROM posts
       JOIN users ON users.id = posts.author_id
       ORDER BY posts.created_at DESC
       LIMIT 50
     `
-    )
-    .all();
-
-  const existingSlugs = new Set(
-    db
-      .prepare("SELECT slug FROM posts WHERE slug IS NOT NULL AND slug != ''")
-      .all()
-      .map((row) => row.slug as string)
   );
 
-  const normalized = posts.map((post) => {
-    let slug = post.slug as string | null;
+  const existingSlugsRows: Array<{ slug: string }> = (
+    await db.query<{ slug: string }>("SELECT slug FROM posts WHERE slug IS NOT NULL AND slug != ''")
+  ).rows;
+  const existingSlugs = new Set(existingSlugsRows.map((row) => row.slug));
+
+  const normalized: Array<
+    Omit<PostRow, "tags" | "slug"> & { slug: string; tags: string[] }
+  > = [];
+
+  for (const post of posts) {
+    let slug = post.slug;
     if (!slug) {
       const baseSlug = slugify(String(post.title ?? "")) || `aviso-${post.id}`;
       slug = baseSlug;
@@ -98,22 +90,22 @@ export async function GET() {
         slug = `${baseSlug}-${counter}`;
       }
       existingSlugs.add(slug);
-      db.prepare("UPDATE posts SET slug = ? WHERE id = ?").run(slug, post.id);
+      await db.query("UPDATE posts SET slug = $1 WHERE id = $2", [slug, post.id]);
     }
 
-    return {
+    normalized.push({
       ...post,
       slug,
       tags: typeof post.tags === "string" && post.tags.length > 0 ? post.tags.split(",") : [],
-    };
-  });
+    });
+  }
 
   return NextResponse.json({ posts: normalized });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const token = request.cookies.get("auth_token")?.value;
-  const user = getSessionUserByToken(token);
+  const user = await getSessionUserByToken(token);
   if (!user) {
     return NextResponse.json({ error: TEXT.unauthorized }, { status: 401 });
   }
@@ -130,12 +122,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: TEXT.missingFields }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await getDb();
   const now = new Date().toISOString();
   const baseSlug = slugify(title) || `aviso-${Date.now()}`;
   let slug = baseSlug;
   let counter = 1;
-  while (db.prepare("SELECT 1 FROM posts WHERE slug = ? LIMIT 1").get(slug)) {
+  while (
+    (await db.query("SELECT 1 FROM posts WHERE slug = $1 LIMIT 1", [slug])).rows.length > 0
+  ) {
     counter += 1;
     slug = `${baseSlug}-${counter}`;
   }
@@ -143,18 +137,18 @@ export async function POST(request: Request) {
   const finalExcerpt = excerpt || content.split(/\s+/).slice(0, 28).join(" ");
   const tagString = tags.join(",");
 
-  const result = db
-    .prepare(
-      `
-      INSERT INTO posts (title, body, slug, excerpt, cover_url, media_url, tags, author_id, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  const { rows } = await db.query(
     `
-    )
-    .run(title, content, slug, finalExcerpt, coverUrl, mediaUrl, tagString, user.id, now);
+      INSERT INTO posts (title, body, slug, excerpt, cover_url, media_url, tags, author_id, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING id
+    `,
+    [title, content, slug, finalExcerpt, coverUrl, mediaUrl, tagString, user.id, now]
+  );
 
   return NextResponse.json({
     post: {
-      id: result.lastInsertRowid,
+      id: rows[0].id,
       title,
       body: content,
       slug,

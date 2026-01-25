@@ -158,7 +158,6 @@ const EDUCATION_VALUES: Record<string, string> = {
   ensino_superior_incompleto: "superior_incompleto",
   ensino_superior_completo: "superior_completo",
   pos_graduacao_: "pos_graduacao",
-  pos_graduacao: "pos_graduacao",
 };
 
 const MARITAL_VALUES: Record<string, string> = {

@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-page-custom-font */
+import type { ReactNode } from "react";
 import "./globals.css";
 import Preloader from "@/components/Preloader";
 
@@ -7,7 +8,7 @@ export const metadata = {
   description: "Frontend do Portal IEAD",
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
       <body>

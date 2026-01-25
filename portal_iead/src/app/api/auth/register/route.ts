@@ -4,6 +4,11 @@ import { hashPassword } from "@/lib/password";
 
 export const runtime = "nodejs";
 
+type ExistingUser = {
+  id: number;
+  status: string;
+};
+
 const MESSAGES = {
   required: "Preencha todos os campos obrigat\u00f3rios.",
   emailInvalid: "E-mail inv\u00e1lido.",
@@ -131,7 +136,7 @@ export async function POST(request: Request) {
   const address = String(body.address ?? "").trim();
   const password = String(body.password ?? "");
 
-  const db = getDb();
+  const db = await getDb();
 
   if (
     !name ||
@@ -237,9 +242,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: MESSAGES.weakPassword }, { status: 400 });
   }
 
-  const existing = db
-    .prepare("SELECT id, status FROM users WHERE email = ? OR cpf = ? LIMIT 1")
-    .get(email, cpf);
+  const existing = (await db.query<ExistingUser>(
+    "SELECT id, status FROM users WHERE email = $1 OR cpf = $2 LIMIT 1",
+    [email, cpf]
+  )).rows[0];
 
   if (existing) {
     const status = String(existing.status ?? "");
@@ -257,7 +263,7 @@ export async function POST(request: Request) {
   const now = new Date().toISOString();
   const hash = hashPassword(password);
 
-  db.prepare(
+  await db.query(
     `
     INSERT INTO users (
       name,
@@ -283,29 +289,30 @@ export async function POST(request: Request) {
       status,
       created_at
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'member', 'pending', ?)
-  `
-  ).run(
-    name,
-    email,
-    cpf,
-    fatherName,
-    fatherCpf,
-    motherName,
-    motherCpf,
-    birthDateRaw,
-    memberTypeValue,
-    hasRoleValue,
-    roleTitleValue,
-    baptizedValue,
-    baptismDateValue,
-    profession,
-    educationLevel,
-    maritalStatus,
-    age,
-    address,
-    hash,
-    now
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, 'member', 'pending', $20)
+  `,
+    [
+      name,
+      email,
+      cpf,
+      fatherName,
+      fatherCpf,
+      motherName,
+      motherCpf,
+      birthDateRaw,
+      memberTypeValue,
+      hasRoleValue,
+      roleTitleValue,
+      baptizedValue,
+      baptismDateValue,
+      profession,
+      educationLevel,
+      maritalStatus,
+      age,
+      address,
+      hash,
+      now,
+    ]
   );
 
   return NextResponse.json({ ok: true, message: MESSAGES.success }, { status: 201 });

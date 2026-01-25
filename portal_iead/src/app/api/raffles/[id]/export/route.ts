@@ -1,79 +1,89 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getSessionUserByToken } from "@/lib/auth";
 import * as XLSX from "xlsx";
 
 export const runtime = "nodejs";
 
-function requireAdmin(request: Request) {
+async function requireAdmin(request: NextRequest) {
   const token = request.cookies.get("auth_token")?.value;
-  const user = getSessionUserByToken(token);
+  const user = await getSessionUserByToken(token);
   if (!user || user.role !== "admin") return null;
   return user;
 }
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const user = requireAdmin(request);
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const user = await requireAdmin(request);
   if (!user) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   }
 
-  const raffleId = Number(params.id);
+  const { id } = await params;
+  const raffleId = Number(id);
   if (!Number.isFinite(raffleId)) {
     return NextResponse.json({ error: "Ação inválida." }, { status: 400 });
   }
 
-  const db = getDb();
-  const raffle = db
-    .prepare(
+  const db = await getDb();
+  const raffle = (
+    await db.query<{
+      id: number;
+      name: string;
+      description: string | null;
+      drawDate: string;
+      salesDeadline: string;
+      quotaTotal: number | string;
+      status: string;
+      createdAt: string;
+    }>(
       `
       SELECT
         id,
         name,
         description,
-        draw_date as drawDate,
-        sales_deadline as salesDeadline,
-        quota_total as quotaTotal,
+        draw_date as "drawDate",
+        sales_deadline as "salesDeadline",
+        quota_total as "quotaTotal",
         status,
-        created_at as createdAt
+        created_at as "createdAt"
       FROM raffles
-      WHERE id = ?
+      WHERE id = $1
       LIMIT 1
-    `
+    `,
+      [raffleId]
     )
-    .get(raffleId) as
-    | {
-        id: number;
-        name: string;
-        description: string | null;
-        drawDate: string;
-        salesDeadline: string;
-        quotaTotal: number;
-        status: string;
-        createdAt: string;
-      }
-    | undefined;
+  ).rows[0];
 
   if (!raffle) {
     return NextResponse.json({ error: "Ação não encontrada." }, { status: 404 });
   }
 
-  const sales = db
-    .prepare(
-      `
-      SELECT number, buyer, seller, paid, created_at as createdAt
-      FROM raffle_sales
-      WHERE raffle_id = ?
-      ORDER BY number ASC
-    `
-    )
-    .all(raffleId) as Array<{
+  const sales: Array<{
     number: string;
     buyer: string;
     seller: string;
     paid: number;
     createdAt: string;
-  }>;
+  }> = (
+    await db.query<{
+      number: string;
+      buyer: string;
+      seller: string;
+      paid: number;
+      createdAt: string;
+    }>(
+      `
+      SELECT number, buyer, seller, paid, created_at as "createdAt"
+      FROM raffle_sales
+      WHERE raffle_id = $1
+      ORDER BY number ASC
+    `,
+      [raffleId]
+    )
+  ).rows;
 
   const resumoRows = [
     { Campo: "Ação", Valor: raffle.name },

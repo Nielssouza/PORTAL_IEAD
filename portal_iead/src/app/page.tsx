@@ -6,6 +6,8 @@ import PageViewTracker from "@/components/PageViewTracker";
 import path from "path";
 import { readdir } from "fs/promises";
 
+export const dynamic = "force-dynamic";
+
 const defaultEventIcon = (
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M4 12h16M12 4v16" />
@@ -91,12 +93,22 @@ async function getVideoSources() {
   }
 }
 export default async function Home() {
-  const db = getDb();
-  const eventRows = db
-    .prepare(
-      "SELECT title, description, event_date as date, event_time as time FROM events WHERE date(event_date) >= date('now') ORDER BY event_date ASC, event_time ASC LIMIT 6"
+  const db = await getDb();
+  const eventRows: Array<{
+    title: string;
+    description: string | null;
+    date: string;
+    time: string;
+  }> = (
+    await db.query<{
+      title: string;
+      description: string | null;
+      date: string;
+      time: string;
+    }>(
+      "SELECT title, description, event_date as date, event_time as time FROM events WHERE event_date >= CURRENT_DATE ORDER BY event_date ASC, event_time ASC LIMIT 6"
     )
-    .all() as Array<{ title: string; description: string | null; date: string; time: string }>;
+  ).rows;
   const weekdayMap = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "S\u00e1b"];
   const events =
     eventRows.length > 0

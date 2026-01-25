@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 import { getSessionUserByToken } from "@/lib/auth";
 
@@ -22,25 +22,23 @@ function isValidTime(value: string) {
 }
 
 export async function GET() {
-  const db = getDb();
-  const events = db
-    .prepare(
-      `
-      SELECT id, title, description, event_date as date, event_time as time, location, created_at as createdAt
+  const db = await getDb();
+  const { rows: events } = await db.query(
+    `
+      SELECT id, title, description, event_date as date, event_time as time, location, created_at as "createdAt"
       FROM events
-      WHERE date(event_date) >= date('now', '-1 day')
+      WHERE event_date >= CURRENT_DATE - 1
       ORDER BY event_date ASC, event_time ASC
       LIMIT 60
     `
-    )
-    .all();
+  );
 
   return NextResponse.json({ events });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const token = request.cookies.get("auth_token")?.value;
-  const user = getSessionUserByToken(token);
+  const user = await getSessionUserByToken(token);
   if (!user || user.role !== "admin") {
     return NextResponse.json({ error: TEXT.unauthorized }, { status: 401 });
   }
@@ -64,20 +62,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: TEXT.invalidTime }, { status: 400 });
   }
 
-  const db = getDb();
+  const db = await getDb();
   const now = new Date().toISOString();
-  const result = db
-    .prepare(
-      `
-      INSERT INTO events (title, description, event_date, event_time, location, created_by, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+  const { rows } = await db.query(
     `
-    )
-    .run(title, description, date, time, location, user.id, now);
+      INSERT INTO events (title, description, event_date, event_time, location, created_by, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id
+    `,
+    [title, description, date, time, location, user.id, now]
+  );
 
   return NextResponse.json({
     event: {
-      id: result.lastInsertRowid,
+      id: rows[0].id,
       title,
       description,
       date,

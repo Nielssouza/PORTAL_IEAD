@@ -60,7 +60,7 @@ export async function GET() {
 
   const pdfBytes = await pdfDoc.save();
 
-  return new Response(pdfBytes, {
+  return new Response(pdfBytes as unknown as BodyInit, {
     headers: {
       "Content-Type": "application/pdf",
       "Content-Disposition": `attachment; filename=\"${TEXT.filename}\"`,

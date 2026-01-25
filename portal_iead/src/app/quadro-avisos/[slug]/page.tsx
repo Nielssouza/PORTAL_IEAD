@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getDb } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
 
 function isVideoFile(url: string) {
   return /\.(mp4|webm|ogg)$/i.test(url);
@@ -26,12 +29,24 @@ function getYouTubeEmbed(url: string) {
 export default async function QuadroAvisoDetalhePage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
   await requireAuth();
-  const db = getDb();
-  const post = db
-    .prepare(
+  const { slug } = await params;
+  const db = await getDb();
+  const post = (
+    await db.query<{
+      id: number;
+      title: string;
+      body: string;
+      slug: string;
+      excerpt: string | null;
+      coverUrl: string | null;
+      mediaUrl: string | null;
+      tags: string | null;
+      createdAt: string;
+      author: string;
+    }>(
       `
       SELECT
         posts.id,
@@ -39,37 +54,25 @@ export default async function QuadroAvisoDetalhePage({
         posts.body,
         posts.slug,
         posts.excerpt,
-        posts.cover_url as coverUrl,
-        posts.media_url as mediaUrl,
+        posts.cover_url as "coverUrl",
+        posts.media_url as "mediaUrl",
         posts.tags,
-        posts.created_at as createdAt,
+        posts.created_at as "createdAt",
         users.name as author
       FROM posts
       JOIN users ON users.id = posts.author_id
-      WHERE posts.slug = ?
+      WHERE posts.slug = $1
       LIMIT 1
-    `
+    `,
+      [slug]
     )
-    .get(params.slug) as
-      | {
-          id: number;
-          title: string;
-          body: string;
-          slug: string;
-          excerpt: string | null;
-          coverUrl: string | null;
-          mediaUrl: string | null;
-          tags: string | null;
-          createdAt: string;
-          author: string;
-        }
-      | undefined;
+  ).rows[0];
 
   if (!post) {
     notFound();
   }
 
-  const tags =
+  const tags: string[] =
     typeof post.tags === "string" && post.tags.length > 0 ? post.tags.split(",") : [];
   const formattedDate = new Date(post.createdAt).toLocaleString("pt-BR");
   const mediaUrl = post.mediaUrl ?? "";
@@ -81,9 +84,9 @@ export default async function QuadroAvisoDetalhePage({
     <main className="page board-page">
       <section className="section blog-detail">
         <div className="board-actions">
-          <a className="cta ghost" href="/quadro-avisos">
+          <Link className="cta ghost" href="/quadro-avisos">
             Voltar para avisos
-          </a>
+          </Link>
         </div>
         <article className="blog-hero">
           {post.coverUrl ? (
