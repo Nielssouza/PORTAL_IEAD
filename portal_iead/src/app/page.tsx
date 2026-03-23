@@ -140,22 +140,28 @@ async function getVideoSources() {
   return files.sort().map((file) => buildMediaUrl("videos", file));
 }
 export default async function Home() {
-  const db = await getDb();
-  const eventRows: Array<{
+  let eventRows: Array<{
     title: string;
     description: string | null;
     date: string;
     time: string;
-  }> = (
-    await db.query<{
-      title: string;
-      description: string | null;
-      date: string;
-      time: string;
-    }>(
-      "SELECT title, description, event_date as date, event_time as time FROM events WHERE event_date >= CURRENT_DATE ORDER BY event_date ASC, event_time ASC LIMIT 6"
-    )
-  ).rows;
+  }> = [];
+
+  try {
+    const db = await getDb();
+    eventRows = (
+      await db.query<{
+        title: string;
+        description: string | null;
+        date: string;
+        time: string;
+      }>(
+        "SELECT title, description, event_date as date, event_time as time FROM events WHERE event_date >= CURRENT_DATE ORDER BY event_date ASC, event_time ASC LIMIT 6"
+      )
+    ).rows;
+  } catch (error) {
+    console.error("Falha ao carregar eventos na home:", error);
+  }
   const weekdayMap = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "S\u00e1b"];
   const events =
     eventRows.length > 0

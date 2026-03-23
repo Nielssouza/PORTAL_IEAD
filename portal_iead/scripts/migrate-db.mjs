@@ -24,18 +24,35 @@ function loadEnv() {
   });
 }
 
-loadEnv();
+function resolveConnectionString() {
+  const value =
+    process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
+  if (!value) {
+    console.error("DATABASE_URL nao configurado.");
+    process.exit(1);
+  }
 
-const isHeroku = Boolean(process.env.DYNO || process.env.HEROKU_APP_NAME);
-const connectionString =
-  isHeroku && process.env.DATABASE_URL
-    ? process.env.DATABASE_URL
-    : process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
-if (!connectionString) {
-  console.error("DATABASE_URL não configurado.");
-  process.exit(1);
+  try {
+    const parsed = new URL(value);
+    if (
+      !["postgres:", "postgresql:"].includes(parsed.protocol) ||
+      !parsed.hostname
+    ) {
+      throw new Error("invalid database url");
+    }
+  } catch {
+    console.error(
+      "String de conexao invalida. Use DATABASE_DIRECT_URL ou DATABASE_URL no formato postgresql://USER:PASSWORD@HOST:PORT/DBNAME"
+    );
+    process.exit(1);
+  }
+
+  return value;
 }
 
+loadEnv();
+
+const connectionString = resolveConnectionString();
 const ssl =
   connectionString.includes("localhost") || connectionString.includes("127.0.0.1")
     ? undefined
@@ -129,5 +146,5 @@ await db.query(`
   );
 `);
 
-console.log("Migração concluída.");
+console.log("Migracao concluida.");
 await db.end();
